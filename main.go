@@ -53,7 +53,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 							ReplyToken: e.ReplyToken,
 							Messages: []messaging_api.MessageInterface{
 								messaging_api.TextMessage{
-									Text: "testt",
+									Text: message.Text,
 								},
 							},
 						},
