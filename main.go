@@ -9,6 +9,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
+)
+
+var (
+	orderList = map[string]int{}
+	orderNo   []string
 )
 
 func main() {
@@ -47,7 +54,12 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 			case webhook.MessageEvent:
 				switch message := e.Message.(type) {
 				case webhook.TextMessageContent:
+					if strings.HasPrefix(message.Text, "#") {
+						resp := drinkCommand(message.Text)
+						if resp != "" {
 
+						}
+					}
 					if _, err = bot.ReplyMessage(
 						&messaging_api.ReplyMessageRequest{
 							ReplyToken: e.ReplyToken,
@@ -84,6 +96,93 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 			}
 		}
 	}
+}
+
+func drinkCommand(command string) string {
+	mainCommand := first2Char(command)
+	switch mainCommand {
+	case "#m", "#menu":
+		return "MENU to be shown."
+	case "#a", "#add":
+		splitCommands := strings.Split(command, " ")
+		l := len(splitCommands)
+		if l == 1 {
+			return ""
+		} else if l == 2 {
+			if _, ok := orderList[splitCommands[1]]; !ok {
+				orderNo = append(orderNo, splitCommands[1])
+			}
+			orderList[splitCommands[1]] += 1
+
+		} else { //len == 3
+			if _, ok := orderList[splitCommands[1]]; !ok {
+				orderNo = append(orderNo, splitCommands[1])
+			}
+			quantity, err := strconv.Atoi(splitCommands[2])
+			if err != nil {
+				return ""
+			}
+			orderList[splitCommands[1]] += quantity
+		}
+
+	case "#r", "#rm", "#remove":
+		splitCommands := strings.Split(command, " ")
+		l := len(splitCommands)
+		if l == 1 {
+			return ""
+		} else if l == 2 {
+			no, err := strconv.Atoi(splitCommands[1])
+			if err != nil {
+				return ""
+			}
+			delete(orderList, orderNo[no])
+			orderNo = removeIndex(orderNo, no)
+		} else { //len == 3
+			no, err := strconv.Atoi(splitCommands[1])
+			if err != nil {
+				return ""
+			}
+			quantity, err := strconv.Atoi(splitCommands[2])
+			if err != nil {
+				return ""
+			}
+			if orderList[orderNo[no]] > quantity {
+				orderList[orderNo[no]] -= quantity
+			} else {
+				delete(orderList, orderNo[no])
+				orderNo = removeIndex(orderNo, no)
+			}
+		}
+		return makeResponse()
+
+	default:
+		log.Printf("Unsupported message content: %T\n", command)
+	}
+
+	return ""
+}
+
+func makeResponse() string {
+	resp := ""
+	for i, v := range orderNo {
+		resp += fmt.Sprintf("\n%d. %s %d", i, v, orderList[v])
+	}
+	return ""
+}
+
+func first2Char(s string) string {
+	i := 0
+	for j := range s {
+		if i == 2 {
+			return s[:j]
+		}
+		i++
+	}
+	return s
+}
+
+func removeIndex(s []string, index int) []string {
+	return append(s[:index], s[index+1:]...)
 }
 
 func ping(c *gin.Context) {
