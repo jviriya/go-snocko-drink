@@ -1,149 +1,93 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"go-pentor-bank/internal/batch"
-	"go-pentor-bank/internal/clog"
-	"go-pentor-bank/internal/common"
-	"go-pentor-bank/internal/config"
-	"go-pentor-bank/internal/consumer"
-	"go-pentor-bank/internal/createIndex"
-	"go-pentor-bank/internal/infra"
-	"go-pentor-bank/internal/onetimebatch"
-	"go-pentor-bank/internal/routes/api"
-	"go-pentor-bank/internal/routes/doc"
-	"go-pentor-bank/internal/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/line/line-bot-sdk-go/v8/linebot"
+	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
+	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
+	"log"
+	"net/http"
 	"os"
-	"strings"
-	_ "time/tzdata"
 )
 
 func main() {
-	port := flag.String("p", "12345", "port number")
-	//socketPort := flag.String("scPort", "8000", "socket port number")
-	socketPortV2 := flag.String("scPortV2", "3011", "socket port number")
-	socketPortV4 := flag.String("scPortV4", "3012", "socket port number")
-	state := flag.String("state", "local", "set working environment")
-	configPath := flag.String("config", "configs/default", "set configs path, default as: 'configs'")
-	errorPath := flag.String("error", "configs/common", "set configs path, default as: 'configs'")
-	app := flag.String("app", "api", "batch, api, and bo")
-	logFormat := flag.String("logFormat", "text", "text, json")
-	debug := flag.Bool("debug", false, "sets log level to debug")
-	jobs := flag.String("job", "", "Job for run batch")
-	prefixPath := flag.String("prefixPath", "", "Job for run batch")
-	flag.Parse()
+	router := gin.Default()
+	// load .env file
 
-	osPort := os.Getenv("PRT")
-	if osPort != "" {
-		port = &osPort
-	}
-	osStage := os.Getenv("STATE")
-	if osStage != "" {
-		state = &osStage
-	}
-	osApp := os.Getenv("APP")
-	if osApp != "" {
-		app = &osApp
-	}
-	osLogFormat := os.Getenv("LOGFORMAT")
-	if osLogFormat != "" {
-		logFormat = &osLogFormat
-	}
-	osJobs := os.Getenv("JOBS")
-	if osJobs != "" {
-		jobs = &osJobs
-	}
-	//osSocketPort := os.Getenv("SOCKETPRT")
-	//if osSocketPort != "" {
-	//	socketPort = &osSocketPort
-	//}
-	osSocketPortV2 := os.Getenv("SOCKETPRTV2")
-	if osSocketPortV2 != "" {
-		socketPortV2 = &osSocketPortV2
-	}
-	osSocketPortV4 := os.Getenv("SOCKETPRTV4")
-	if osSocketPortV4 != "" {
-		socketPortV4 = &osSocketPortV4
-	}
-
-	clog.New(*logFormat, *debug)
-
-	log := clog.GetLog()
-	log.Info().Msg(fmt.Sprintf("Running on %v environment, app: %v", *state, *app))
-
-	if err := config.Conf.InitViperWithStage(*state, *configPath); err != nil {
-		log.Panic().Err(err).Msg("Read config file err:")
-		return
-	}
-
-	if err := config.InitDefaultValidators(); err != nil {
-		log.Error().Err(err).Msg("InitDefaultValidators err")
-		return
-	}
-
-	if err := config.EM.Init(*errorPath); err != nil {
-		log.Panic().Err(err).Msg("Read Error file")
-		return
-	}
-
-	// Set time location
-	err := config.LoadTimeLocation()
+	// Line
+	channelSecret := os.Getenv("ad77a9c6fe42d22cf61bedf3598bad8b")
+	bot, err := messaging_api.NewMessagingApiAPI(
+		os.Getenv("6UBugZb++eWul5dBiRjvyPVUWpLfv8AjDtMPT1ItbucizPSQiwQTt6vPPiSKBiRyTXhi+z60uK0IPAveE7nPJ+xLYicZOPP/xGzte0n4HWkBi/RnFlmzCQzN7w5j8XGKZVn44fNKZ3WSRjYEmoN4TwdB04t89/1O/w1cDnyilFU="),
+	)
 	if err != nil {
-		log.Panic().Err(err).Msg("parse location error")
+		log.Fatal(err)
 	}
+	// routess
+	router.GET("/ping", ping)
+	router.POST("/callback", lineCallback(bot, channelSecret))
+	router.Run(":2500")
+}
 
-	infra.EstablishInfraConnection(*app)
+func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cb, err := webhook.ParseRequest(channelSecret, c.Request)
+		if err != nil {
+			log.Printf("Cannot parse request: %+v\n", err)
+			if err == linebot.ErrInvalidSignature {
+				c.Status(400)
+			} else {
+				c.Status(500)
+			}
+			return
+		}
 
-	defer func() {
-		log.Print("Running cleanup tasks...")
-		infra.ShutdownInfra()
-		log.Print("Server down")
-	}()
+		for _, event := range cb.Events {
+			switch e := event.(type) {
+			case webhook.MessageEvent:
+				switch message := e.Message.(type) {
+				case webhook.TextMessageContent:
 
-	log.Info().Msgf("running app %v, job %v", *app, strings.Split(*jobs, ","))
-	switch *app {
-	case common.AppAPI:
-		//socketIO.RunBroadcast(*socketPortV2, *socketPortV4)
-		api.App(*app, *port, *prefixPath)
-
-	//case common.AppBO:
-	//	socketIO.RunBroadcast(*socketPortV2, *socketPortV4)
-	//	bo.App(*app, *port)
-	//
-	//case common.AppOpenAPI:
-	//	socketIO.RunBroadcast(*socketPortV2, *socketPortV4)
-	//	openapi.App(*app, *port)
-	//
-	//case common.AppCDN:
-	//	cdnImg.App(*app, *port)
-
-	case "doc":
-		doc.App(*app, *port)
-
-	case common.AppBatch:
-		log.Info().Msgf("Batch: running at port %v", *port)
-		batch.Batch(strings.Split(*jobs, ","), *port)
-
-	//case common.AppSocketIOV2:
-	//	socketIO.RunBroadcast(*socketPortV2, *socketPortV4)
-	//	appv2.NewSocketServerConnector(*socketPort, false)
-	//
-	//case common.AppSocketio:
-	//	socketIO.RunBroadcast(*socketPortV2, *socketPortV4)
-	//	appv4.NewSocketServerConnector(*socketPort, false)
-
-	case "index":
-		createIndex.Run()
-
-	case common.AppConsumer:
-		consumer.Run(*jobs, *port, *socketPortV2, *socketPortV4)
-
-	case "onetimebatch":
-		onetimebatch.Run(*jobs)
-
-	default:
-		log.Panic().Msg("invalid app")
+					if _, err = bot.ReplyMessage(
+						&messaging_api.ReplyMessageRequest{
+							ReplyToken: e.ReplyToken,
+							Messages: []messaging_api.MessageInterface{
+								messaging_api.TextMessage{
+									Text: "testt",
+								},
+							},
+						},
+					); err != nil {
+						log.Print(err)
+					} else {
+						log.Println("Sent text reply.")
+					}
+				case webhook.StickerMessageContent:
+					replyMessage := fmt.Sprintf(
+						"sticker id is %s, stickerResourceType is %s", message.StickerId, message.StickerResourceType)
+					if _, err = bot.ReplyMessage(
+						&messaging_api.ReplyMessageRequest{
+							ReplyToken: e.ReplyToken,
+							Messages: []messaging_api.MessageInterface{
+								messaging_api.TextMessage{
+									Text: replyMessage,
+								},
+							},
+						}); err != nil {
+						log.Print(err)
+					} else {
+						log.Println("Sent sticker reply.")
+					}
+				default:
+					log.Printf("Unsupported message content: %T\n", e.Message)
+				}
+			}
+		}
 	}
-	utils.WaitGoRoutines()
+}
+
+func ping(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "pong",
+	})
 }
