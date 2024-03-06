@@ -1,0 +1,12 @@
+[
+  {
+    "path": "color",
+    "bsonType": "string",
+    "keyId": "dataKey1",
+    "queries": [
+      {
+        "queryType": "equality"
+      }
+    ]
+  }
+]

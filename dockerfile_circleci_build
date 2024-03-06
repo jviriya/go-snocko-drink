@@ -1,0 +1,78 @@
+# Dockerfile References: https://docs.docker.com/engine/reference/builder/
+# Start from the latest golang base image
+FROM --platform=linux/amd64 golang:1.21.0-bullseye as build-env
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy the source from the current directory to the Working Directory inside the container
+COPY . .
+
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV GOARCH=amd64
+
+RUN apt-get update
+
+RUN sh -c 'curl -s --location https://www.mongodb.org/static/pgp/libmongocrypt.asc | gpg --dearmor >/etc/apt/trusted.gpg.d/libmongocrypt.gpg'
+RUN echo "deb https://libmongocrypt.s3.amazonaws.com/apt/debian bullseye/libmongocrypt/1.7 main" | tee /etc/apt/sources.list.d/libmongocrypt.list
+RUN apt-get update
+RUN apt-get install -y libbson-1.0-0 libbson-dev libmongoc-dev
+RUN apt-get update
+RUN apt-get install -y libmongocrypt-dev
+RUN go mod tidy
+
+RUN go build -o go-pentor-bank.bin -tags cse .
+
+FROM --platform=linux/amd64 debian:bullseye
+ARG git_commit=default
+ARG version=0.0.0
+ARG env=dev
+
+ENV GIT_COMMIT=$git_commit
+ENV VERSION=$version
+ENV ENV=$env
+ENV TZ=Asia/Bangkok
+LABEL GIT_COMMIT=$git_commit \
+      VERSION=$version \
+      ENV=$env
+LABEL vendor="Snocko" project="go-pentor-bank"
+
+WORKDIR /app
+
+COPY --from=build-env /app/go-pentor-bank.bin /app/go-pentor-bank.bin
+COPY --from=build-env /app/csr /app/csr
+COPY --from=build-env /app/docker-entrypoint.sh /app/docker-entrypoint.sh
+
+RUN mkdir configs/
+RUN mkdir template/
+RUN mkdir docs/
+
+#RUN apt-get clean && apt-get autoclean
+#RUN apt-get update
+#RUN apt-get install -y curl gpg
+#
+#RUN sh -c 'curl -s --location https://www.mongodb.org/static/pgp/libmongocrypt.asc | gpg --dearmor >/etc/apt/trusted.gpg.d/libmongocrypt.gpg'
+#RUN echo "deb https://libmongocrypt.s3.amazonaws.com/apt/debian bullseye/libmongocrypt/1.7 main" | tee /etc/apt/sources.list.d/libmongocrypt.list
+#RUN apt-get update
+#RUN apt-get install -y libmongocrypt-dev
+#RUN apt-get install tini
+
+# Add configs so go.viper can read config.
+COPY configs ./configs
+COPY package.json ./package.json
+COPY docs ./docs
+COPY template ./template
+#COPY package.json ./package.json
+#COPY assets/images ./assets/images
+
+# Add zoneinfo.zip so time.LoadLocation can work inside alpine image.
+COPY deployments/docker/assets/zoneinfo.zip /
+
+# Expose port 8080 to the outside world
+EXPOSE 12345
+
+ENTRYPOINT ["./tini-static", "--"]
+
+# Command to run the executable
+ENTRYPOINT [ "/bin/sh", "docker-entrypoint.sh" ]

@@ -1,0 +1,30 @@
+[
+  {
+    "code": "general_01",
+    "content": "Try again"
+  },
+  {
+    "code": "general_02",
+    "content": "Something went wrong\nPlease Try again"
+  },
+  {
+    "code": "general_03",
+    "content": "No internet connection\nPlease check your internet connection"
+  },
+  {
+    "code": "general_04",
+    "content": "Send code"
+  },
+  {
+    "code": "general_05",
+    "content": "Resend code"
+  },
+  {
+    "code": "general_06",
+    "content": "User is expired"
+  },
+  {
+    "code": "general_07",
+    "content": "Please log in again."
+  }
+]
