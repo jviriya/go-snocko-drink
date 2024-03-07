@@ -74,10 +74,18 @@ func main() {
 	//fmt.Println()
 
 	// routess
+
+	c := cron.New()
+	c.AddFunc("0 12 * * *", func() {
+		pushMessages(bot, "ทดสิบ")
+	})
+
+	go c.Run()
+
 	router.GET("/ping", ping)
 	router.GET("/", handler)
 	router.POST("/callback", lineCallback(bot, channelSecret))
-	router.Run(":5000")
+	router.Run(":5001")
 }
 
 func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.HandlerFunc {
@@ -107,6 +115,9 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 								Messages: []messaging_api.MessageInterface{
 									messaging_api.TextMessage{
 										Text: resp,
+									},
+									messaging_api.TextMessage{
+										Text: e.Source.(webhook.GroupSource).GroupId,
 									},
 								},
 							},
@@ -280,4 +291,18 @@ func handler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "OK",
 	})
+}
+
+func pushMessages(bot *messaging_api.MessagingApiAPI, message string) {
+	_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
+		To: os.Getenv("GROUP_ID"),
+		Messages: []messaging_api.MessageInterface{
+			messaging_api.TextMessage{Text: message},
+		},
+		NotificationDisabled:   true,
+		CustomAggregationUnits: nil,
+	}, "")
+	if err != nil {
+		log.Print(err)
+	}
 }
