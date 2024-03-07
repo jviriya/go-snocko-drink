@@ -20,7 +20,7 @@ var (
 )
 
 func main() {
-	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	// load .env file
 	err := godotenv.Load("snockodrink.env")
@@ -34,6 +34,45 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//
+	//fmt.Println("test: ")
+	//
+	//txt := "พ asdf"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "พ 1"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "พ asdfd"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "พ asdf 2"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "ล 1 2"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "ล 2 1"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "ล asdf 1"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "ล 1"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+	//
+	//txt = "พ asdf"
+	//fmt.Printf("%s", drinkCommand(txt))
+	//fmt.Println()
+
 	// routess
 	router.GET("/ping", ping)
 	router.GET("/", handler)
@@ -59,29 +98,29 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 			case webhook.MessageEvent:
 				switch message := e.Message.(type) {
 				case webhook.TextMessageContent:
-					if strings.HasPrefix(message.Text, "#") {
-						resp := drinkCommand(message.Text)
-						if resp != "" {
-							if _, err = bot.ReplyMessage(
-								&messaging_api.ReplyMessageRequest{
-									ReplyToken: e.ReplyToken,
-									Messages: []messaging_api.MessageInterface{
-										messaging_api.TextMessage{
-											Text: resp,
-										},
+					//if strings.HasPrefix(message.Text, "#") {
+					resp := drinkCommand(message.Text)
+					if resp != "" {
+						if _, err = bot.ReplyMessage(
+							&messaging_api.ReplyMessageRequest{
+								ReplyToken: e.ReplyToken,
+								Messages: []messaging_api.MessageInterface{
+									messaging_api.TextMessage{
+										Text: resp,
 									},
 								},
-							); err != nil {
-								log.Print(err)
-							} else {
-								log.Println("Sent text reply.")
-							}
+							},
+						); err != nil {
+							log.Print(err)
 						} else {
-							log.Printf("Unsupported message content: %T\n", message.Text)
+							log.Println("Sent text reply.")
 						}
 					} else {
 						log.Printf("Unsupported message content: %T\n", message.Text)
 					}
+					//} else {
+					//	log.Printf("Unsupported message content: %T\n", message.Text)
+					//}
 				case webhook.StickerMessageContent:
 					//replyMessage := fmt.Sprintf(
 					//	"sticker id is %s, stickerResourceType is %s", message.StickerId, message.StickerResourceType)
@@ -107,11 +146,16 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 }
 
 func drinkCommand(command string) string {
-	mainCommand := first2Char(command)
-	switch mainCommand {
-	case "#m", "#menu":
+	switch {
+	case command == "เมนู", command == "menu":
 		return "MENU to be shown."
-	case "#a", "#add":
+	case command == "รายการ", command == "order":
+		return makeResponse()
+	case command == "เคลียร์", command == "clear":
+		orderList = map[string]int{}
+		orderNo = []string{}
+		return makeResponse()
+	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
 		if l == 1 {
@@ -130,14 +174,14 @@ func drinkCommand(command string) string {
 				orderList[splitCommands[1]] += 1
 			}
 
-		} else { //len == 3
+		} else if l == 3 {
+			quantity, err := strconv.Atoi(splitCommands[2])
+			if err != nil {
+				return ""
+			}
 			no, err := strconv.Atoi(splitCommands[1])
 			if err == nil {
 				no--
-				quantity, err := strconv.Atoi(splitCommands[2])
-				if err != nil {
-					return ""
-				}
 				if len(orderNo) > no {
 					orderList[orderNo[no]] += quantity
 				}
@@ -145,65 +189,76 @@ func drinkCommand(command string) string {
 				if _, ok := orderList[splitCommands[1]]; !ok {
 					orderNo = append(orderNo, splitCommands[1])
 				}
-				quantity, err := strconv.Atoi(splitCommands[2])
-				if err != nil {
-					return ""
-				}
 				orderList[splitCommands[1]] += quantity
 			}
 		}
 
-	case "#r", "#rm", "#remove":
+	case firstNChar(command, 2) == "ล ", firstNChar(command, 3) == "ลด ":
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
 		if l == 1 {
 			return ""
 		} else if l == 2 {
 			no, err := strconv.Atoi(splitCommands[1])
-			if err != nil {
-				return ""
+			if err == nil { //remove by order number
+				no--
+			} else {
+				for i, v := range orderNo { //find index
+					if v == splitCommands[1] {
+						no = i
+						break
+					}
+				}
 			}
-			no--
-			delete(orderList, orderNo[no])
-			orderNo = removeIndex(orderNo, no)
-		} else { //len == 3
-			no, err := strconv.Atoi(splitCommands[1])
-			if err != nil {
-				return ""
+			if _, ok := orderList[orderNo[no]]; ok {
+				delete(orderList, orderNo[no])
+				orderNo = removeIndex(orderNo, no)
 			}
-			no--
+		} else if l == 3 {
 			quantity, err := strconv.Atoi(splitCommands[2])
 			if err != nil {
 				return ""
 			}
+			no, err := strconv.Atoi(splitCommands[1])
+			if err == nil { //remove by order number
+				no--
+			} else {
+				for i, v := range orderNo { //find index
+					if v == splitCommands[1] {
+						no = i
+						break
+					}
+				}
+			}
 			if orderList[orderNo[no]] > quantity {
 				orderList[orderNo[no]] -= quantity
 			} else {
-				delete(orderList, orderNo[no])
-				orderNo = removeIndex(orderNo, no)
+				if _, ok := orderList[orderNo[no]]; ok {
+					delete(orderList, orderNo[no])
+					orderNo = removeIndex(orderNo, no)
+				}
 			}
 		}
-		return makeResponse()
 
 	default:
 		log.Printf("Unsupported message content: %T\n", command)
 	}
 
-	return ""
+	return makeResponse()
 }
 
 func makeResponse() string {
 	resp := ""
 	for i, v := range orderNo {
-		resp += fmt.Sprintf("\n%d. %s %d", i, v, orderList[v])
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList[v])
 	}
 	return resp
 }
 
-func first2Char(s string) string {
+func firstNChar(s string, n int) string {
 	i := 0
 	for j := range s {
-		if i == 2 {
+		if i == n {
 			return s[:j]
 		}
 		i++
