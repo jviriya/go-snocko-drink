@@ -112,20 +112,40 @@ func drinkCommand(command string) string {
 		if l == 1 {
 			return ""
 		} else if l == 2 {
-			if _, ok := orderList[splitCommands[1]]; !ok {
-				orderNo = append(orderNo, splitCommands[1])
+			no, err := strconv.Atoi(splitCommands[1])
+			if err == nil {
+				no--
+				if len(orderNo) > no {
+					orderList[orderNo[no]] += 1
+				}
+			} else {
+				if _, ok := orderList[splitCommands[1]]; !ok {
+					orderNo = append(orderNo, splitCommands[1])
+				}
+				orderList[splitCommands[1]] += 1
 			}
-			orderList[splitCommands[1]] += 1
 
 		} else { //len == 3
-			if _, ok := orderList[splitCommands[1]]; !ok {
-				orderNo = append(orderNo, splitCommands[1])
+			no, err := strconv.Atoi(splitCommands[1])
+			if err == nil {
+				no--
+				quantity, err := strconv.Atoi(splitCommands[2])
+				if err != nil {
+					return ""
+				}
+				if len(orderNo) > no {
+					orderList[orderNo[no]] += quantity
+				}
+			} else {
+				if _, ok := orderList[splitCommands[1]]; !ok {
+					orderNo = append(orderNo, splitCommands[1])
+				}
+				quantity, err := strconv.Atoi(splitCommands[2])
+				if err != nil {
+					return ""
+				}
+				orderList[splitCommands[1]] += quantity
 			}
-			quantity, err := strconv.Atoi(splitCommands[2])
-			if err != nil {
-				return ""
-			}
-			orderList[splitCommands[1]] += quantity
 		}
 
 	case "#r", "#rm", "#remove":
@@ -138,6 +158,7 @@ func drinkCommand(command string) string {
 			if err != nil {
 				return ""
 			}
+			no--
 			delete(orderList, orderNo[no])
 			orderNo = removeIndex(orderNo, no)
 		} else { //len == 3
@@ -145,6 +166,7 @@ func drinkCommand(command string) string {
 			if err != nil {
 				return ""
 			}
+			no--
 			quantity, err := strconv.Atoi(splitCommands[2])
 			if err != nil {
 				return ""
