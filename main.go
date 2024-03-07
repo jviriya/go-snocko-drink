@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/line/line-bot-sdk-go/v8/linebot"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -21,11 +23,13 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	// load .env file
+	err := godotenv.Load("snockodrink.env")
 
 	// Line
-	channelSecret := "ad77a9c6fe42d22cf61bedf3598bad8b"
+
+	channelSecret := os.Getenv("LINE_CHANNEL_SECRET")
 	bot, err := messaging_api.NewMessagingApiAPI(
-		"6UBugZb++eWul5dBiRjvyPVUWpLfv8AjDtMPT1ItbucizPSQiwQTt6vPPiSKBiRyTXhi+z60uK0IPAveE7nPJ+xLYicZOPP/xGzte0n4HWkBi/RnFlmzCQzN7w5j8XGKZVn44fNKZ3WSRjYEmoN4TwdB04t89/1O/w1cDnyilFU=",
+		os.Getenv("LINE_CHANNEL_TOKEN"),
 	)
 	if err != nil {
 		log.Fatal(err)
