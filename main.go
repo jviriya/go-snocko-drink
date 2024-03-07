@@ -57,39 +57,42 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 					if strings.HasPrefix(message.Text, "#") {
 						resp := drinkCommand(message.Text)
 						if resp != "" {
-
-						}
-					}
-					if _, err = bot.ReplyMessage(
-						&messaging_api.ReplyMessageRequest{
-							ReplyToken: e.ReplyToken,
-							Messages: []messaging_api.MessageInterface{
-								messaging_api.TextMessage{
-									Text: message.Text,
+							if _, err = bot.ReplyMessage(
+								&messaging_api.ReplyMessageRequest{
+									ReplyToken: e.ReplyToken,
+									Messages: []messaging_api.MessageInterface{
+										messaging_api.TextMessage{
+											Text: resp,
+										},
+									},
 								},
-							},
-						},
-					); err != nil {
-						log.Print(err)
+							); err != nil {
+								log.Print(err)
+							} else {
+								log.Println("Sent text reply.")
+							}
+						} else {
+							log.Printf("Unsupported message content: %T\n", message.Text)
+						}
 					} else {
-						log.Println("Sent text reply.")
+						log.Printf("Unsupported message content: %T\n", message.Text)
 					}
 				case webhook.StickerMessageContent:
-					replyMessage := fmt.Sprintf(
-						"sticker id is %s, stickerResourceType is %s", message.StickerId, message.StickerResourceType)
-					if _, err = bot.ReplyMessage(
-						&messaging_api.ReplyMessageRequest{
-							ReplyToken: e.ReplyToken,
-							Messages: []messaging_api.MessageInterface{
-								messaging_api.TextMessage{
-									Text: replyMessage,
-								},
-							},
-						}); err != nil {
-						log.Print(err)
-					} else {
-						log.Println("Sent sticker reply.")
-					}
+					//replyMessage := fmt.Sprintf(
+					//	"sticker id is %s, stickerResourceType is %s", message.StickerId, message.StickerResourceType)
+					//if _, err = bot.ReplyMessage(
+					//	&messaging_api.ReplyMessageRequest{
+					//		ReplyToken: e.ReplyToken,
+					//		Messages: []messaging_api.MessageInterface{
+					//			messaging_api.TextMessage{
+					//				Text: replyMessage,
+					//			},
+					//		},
+					//	}); err != nil {
+					//	log.Print(err)
+					//} else {
+					//	log.Println("Sent sticker reply.")
+					//}
 				default:
 					log.Printf("Unsupported message content: %T\n", e.Message)
 				}
