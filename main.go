@@ -8,7 +8,6 @@ import (
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -19,21 +18,23 @@ var (
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	// load .env file
 
 	// Line
-	channelSecret := os.Getenv("ad77a9c6fe42d22cf61bedf3598bad8b")
+	channelSecret := "ad77a9c6fe42d22cf61bedf3598bad8b"
 	bot, err := messaging_api.NewMessagingApiAPI(
-		os.Getenv("6UBugZb++eWul5dBiRjvyPVUWpLfv8AjDtMPT1ItbucizPSQiwQTt6vPPiSKBiRyTXhi+z60uK0IPAveE7nPJ+xLYicZOPP/xGzte0n4HWkBi/RnFlmzCQzN7w5j8XGKZVn44fNKZ3WSRjYEmoN4TwdB04t89/1O/w1cDnyilFU="),
+		"6UBugZb++eWul5dBiRjvyPVUWpLfv8AjDtMPT1ItbucizPSQiwQTt6vPPiSKBiRyTXhi+z60uK0IPAveE7nPJ+xLYicZOPP/xGzte0n4HWkBi/RnFlmzCQzN7w5j8XGKZVn44fNKZ3WSRjYEmoN4TwdB04t89/1O/w1cDnyilFU=",
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// routess
 	router.GET("/ping", ping)
+	router.GET("/", handler)
 	router.POST("/callback", lineCallback(bot, channelSecret))
-	router.Run(":2500")
+	router.Run(":5000")
 }
 
 func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.HandlerFunc {
@@ -213,5 +214,11 @@ func removeIndex(s []string, index int) []string {
 func ping(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "pong",
+	})
+}
+
+func handler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "OK",
 	})
 }
