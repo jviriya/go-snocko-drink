@@ -16,12 +16,13 @@ import (
 )
 
 var (
-	orderList = map[string]int{}
-	orderNo   []string
+	orderList     = map[string]int{}
+	orderNo       []string
+	additionalMsg string
 )
 
 func main() {
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	// load .env file
 	err := godotenv.Load("snockodrink.env")
@@ -78,7 +79,9 @@ func main() {
 
 	c := cron.New()
 	c.AddFunc("0 12 * * *", func() {
-		pushMessages(bot, "ทดสิบ")
+		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
+		orderList = map[string]int{}
+		orderNo = []string{}
 	})
 
 	go c.Run()
@@ -86,7 +89,7 @@ func main() {
 	router.GET("/ping", ping)
 	router.GET("/", handler)
 	router.POST("/callback", lineCallback(bot, channelSecret))
-	router.Run(":5001")
+	router.Run(":5000")
 }
 
 func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.HandlerFunc {
@@ -109,18 +112,27 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 				case webhook.TextMessageContent:
 					//if strings.HasPrefix(message.Text, "#") {
 					resp := drinkCommand(message.Text)
+
+					messages := []messaging_api.MessageInterface{
+						messaging_api.TextMessage{
+							Text: resp, //Modify text here
+						},
+						messaging_api.TextMessage{
+							Text: e.Source.(webhook.GroupSource).GroupId,
+						},
+					}
+
+					if additionalMsg != "" {
+						messages = append(messages, messaging_api.TextMessage{
+							Text: additionalMsg,
+						})
+					}
+
 					if resp != "" {
 						if _, err = bot.ReplyMessage(
 							&messaging_api.ReplyMessageRequest{
 								ReplyToken: e.ReplyToken,
-								Messages: []messaging_api.MessageInterface{
-									messaging_api.TextMessage{
-										Text: resp,
-									},
-									messaging_api.TextMessage{
-										Text: e.Source.(webhook.GroupSource).GroupId,
-									},
-								},
+								Messages:   messages,
 							},
 						); err != nil {
 							log.Print(err)
@@ -158,14 +170,17 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 }
 
 func drinkCommand(command string) string {
+	additionalMsg = ""
 	switch {
 	case command == "เมนู", command == "menu":
 		return "ดูในโน้ตเลยจ้า"
 	case command == "รายการ", command == "order":
+		additionalMsg = "ดูได้เลยจ้า"
 		return makeResponse()
 	case command == "เคลียร์", command == "clear":
 		orderList = map[string]int{}
 		orderNo = []string{}
+		additionalMsg = "clear แล้วจ้า"
 		return makeResponse()
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
 		splitCommands := strings.Split(command, " ")
@@ -206,6 +221,7 @@ func drinkCommand(command string) string {
 		}
 
 	case firstNChar(command, 2) == "ล ", firstNChar(command, 3) == "ลบ ", firstNChar(command, 3) == "ลด ":
+		additionalMsg = "รับทราบจ้า"
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
 		if l == 1 {
@@ -260,7 +276,7 @@ func drinkCommand(command string) string {
 }
 
 func makeResponse() string {
-	resp := ""
+	resp := "รายการทั้งหมด\n---------------------\n"
 	for i, v := range orderNo {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList[v])
 	}
