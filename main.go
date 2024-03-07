@@ -160,7 +160,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 func drinkCommand(command string) string {
 	switch {
 	case command == "เมนู", command == "menu":
-		return "MENU to be shown."
+		return "ดูในโน้ตเลยจ้า"
 	case command == "รายการ", command == "order":
 		return makeResponse()
 	case command == "เคลียร์", command == "clear":
@@ -205,7 +205,7 @@ func drinkCommand(command string) string {
 			}
 		}
 
-	case firstNChar(command, 2) == "ล ", firstNChar(command, 3) == "ลด ":
+	case firstNChar(command, 2) == "ล ", firstNChar(command, 3) == "ลบ ", firstNChar(command, 3) == "ลด ":
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
 		if l == 1 {
