@@ -197,7 +197,7 @@ func makeResponse() string {
 	for i, v := range orderNo {
 		resp += fmt.Sprintf("\n%d. %s %d", i, v, orderList[v])
 	}
-	return ""
+	return resp
 }
 
 func first2Char(s string) string {
