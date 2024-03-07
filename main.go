@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -82,6 +83,19 @@ func main() {
 		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
 		orderList = map[string]int{}
 		orderNo = []string{}
+		additionalMsg = ""
+	})
+
+	c.AddFunc("50 12 * * *", func() {
+		pushMessages(bot, "อีก 10 นาทีปิดแล้วนาจา !!!")
+	})
+
+	c.AddFunc("55 12 * * *", func() {
+		pushMessages(bot, "อีก 5 นาทีปิดแล้วนาจา !!!")
+	})
+
+	c.AddFunc("0 13 * * *", func() {
+		pushMessages(bot, "ปิดจ้า !!!")
 	})
 
 	go c.Run()
@@ -113,38 +127,37 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 					//if strings.HasPrefix(message.Text, "#") {
 					resp := drinkCommand(message.Text)
 
-					messages := []messaging_api.MessageInterface{
-						messaging_api.TextMessage{
-							Text: resp, //Modify text here
-						},
-						messaging_api.TextMessage{
-							Text: e.Source.(webhook.GroupSource).GroupId,
-						},
-					}
-
-					if additionalMsg != "" {
-						messages = append(messages, messaging_api.TextMessage{
-							Text: additionalMsg,
-						})
-					}
-
 					if resp != "" {
-						if _, err = bot.ReplyMessage(
-							&messaging_api.ReplyMessageRequest{
-								ReplyToken: e.ReplyToken,
-								Messages:   messages,
+						messages := []messaging_api.MessageInterface{
+							messaging_api.TextMessage{
+								Text: resp, //Modify text here
 							},
-						); err != nil {
-							log.Print(err)
-						} else {
-							log.Println("Sent text reply.")
+							messaging_api.TextMessage{
+								Text: fmt.Sprintf("%v <%v>", e.Source.(webhook.GroupSource).GroupId, time.Now()),
+							},
 						}
-					} else {
-						log.Printf("Unsupported message content: %T\n", message.Text)
+
+						if additionalMsg != "" {
+							messages = append(messages, messaging_api.TextMessage{
+								Text: additionalMsg,
+							})
+						}
+
+						if resp != "" {
+							if _, err = bot.ReplyMessage(
+								&messaging_api.ReplyMessageRequest{
+									ReplyToken: e.ReplyToken,
+									Messages:   messages,
+								},
+							); err != nil {
+								log.Print(err)
+							} else {
+								log.Println("Sent text reply.")
+							}
+						} else {
+							log.Printf("Unsupported message content: %T\n", message.Text)
+						}
 					}
-					//} else {
-					//	log.Printf("Unsupported message content: %T\n", message.Text)
-					//}
 				case webhook.StickerMessageContent:
 					//replyMessage := fmt.Sprintf(
 					//	"sticker id is %s, stickerResourceType is %s", message.StickerId, message.StickerResourceType)
@@ -270,6 +283,7 @@ func drinkCommand(command string) string {
 
 	default:
 		log.Printf("Unsupported message content: %T\n", command)
+		return ""
 	}
 
 	return makeResponse()
