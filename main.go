@@ -17,8 +17,16 @@ import (
 )
 
 var (
-	orderList     = map[string]map[string]int{}
-	orderNo       map[string][]string
+	orderList = map[string]map[string]int{
+		"น": map[string]int{},
+		"ข": map[string]int{},
+		"ผ": map[string]int{},
+	}
+	orderNo = map[string][]string{
+		"น": []string{},
+		"ข": []string{},
+		"ผ": []string{},
+	}
 	additionalMsg string
 	bangkokTZ     *time.Location
 )
@@ -44,12 +52,40 @@ func main() {
 		log.Print(err)
 	}
 
+	com := "พ ผ เทส 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ น เทส2 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ ข เทส3 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "ล ผ 1 1"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "clear"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
 	c.AddFunc("30 11 * * *", func() {
 		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
-		orderList = map[string]map[string]int{}
-		orderNo = map[string][]string{}
+		orderList = map[string]map[string]int{
+			"น": map[string]int{},
+			"ข": map[string]int{},
+			"ผ": map[string]int{},
+		}
+		orderNo = map[string][]string{
+			"น": []string{},
+			"ข": []string{},
+			"ผ": []string{},
+		}
 		additionalMsg = ""
 	})
 
@@ -160,8 +196,16 @@ func drinkCommand(command string) string {
 		additionalMsg = "ดูได้เลยจ้า"
 		return makeResponse()
 	case command == "เคลียร์", command == "clear":
-		orderList = map[string]map[string]int{}
-		orderNo = map[string][]string{}
+		orderList = map[string]map[string]int{
+			"น": map[string]int{},
+			"ข": map[string]int{},
+			"ผ": map[string]int{},
+		}
+		orderNo = map[string][]string{
+			"น": []string{},
+			"ข": []string{},
+			"ผ": []string{},
+		}
 		additionalMsg = "clear แล้วจ้า"
 		return makeResponse()
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
@@ -184,7 +228,7 @@ func drinkCommand(command string) string {
 			}
 
 		} else if l == 4 {
-			quantity, err := strconv.Atoi(splitCommands[2])
+			quantity, err := strconv.Atoi(splitCommands[3])
 			if err != nil {
 				return ""
 			}
@@ -259,20 +303,25 @@ func drinkCommand(command string) string {
 }
 
 func makeResponse() string {
-	resp := "รายการทั้งหมด\n---------------------\n"
+	resp := "รายการทั้งหมด\n\n"
 
-	resp += "ไซส์ L\n---------------------\n"
+	resp += "ไซส์ L\n---------------------"
 	for i, v := range orderNo["น"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["น"][v])
 	}
-	resp += "ขนม\n---------------------\n"
+	resp += "\n\n"
+
+	resp += "ขนม\n---------------------"
 	for i, v := range orderNo["ข"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ข"][v])
 	}
-	resp += "น้ำผลไม้\n---------------------\n"
+	resp += "\n\n"
+
+	resp += "น้ำผลไม้\n---------------------"
 	for i, v := range orderNo["ผ"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ผ"][v])
 	}
+	resp += "\n"
 	return resp
 }
 
