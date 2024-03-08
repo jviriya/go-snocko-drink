@@ -191,7 +191,7 @@ func drinkCommand(command string) string {
 	additionalMsg = ""
 	switch {
 	case command == "เมนู", command == "menu":
-		return "ดูในโน้ตเลยจ้า"
+		return "ดูใน Albums เลยจ้า"
 	case command == "รายการ", command == "order":
 		additionalMsg = "ดูได้เลยจ้า"
 		return makeResponse()
@@ -214,20 +214,28 @@ func drinkCommand(command string) string {
 		if l < 3 {
 			return ""
 		} else if l == 3 {
+			typ := convertType(splitCommands[1])
+			if typ == "" {
+				return ""
+			}
 			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil {
 				no--
-				if len(orderNo[splitCommands[1]]) > no {
-					orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] += 1
+				if len(orderNo[typ]) > no {
+					orderList[typ][orderNo[typ][no]] += 1
 				}
 			} else {
-				if _, ok := orderList[splitCommands[1]][splitCommands[2]]; !ok {
-					orderNo[splitCommands[1]] = append(orderNo[splitCommands[1]], splitCommands[2])
+				if _, ok := orderList[typ][splitCommands[2]]; !ok {
+					orderNo[typ] = append(orderNo[typ], splitCommands[2])
 				}
-				orderList[splitCommands[1]][splitCommands[2]] += 1
+				orderList[typ][splitCommands[2]] += 1
 			}
 
 		} else if l == 4 {
+			typ := convertType(splitCommands[1])
+			if typ == "" {
+				return ""
+			}
 			quantity, err := strconv.Atoi(splitCommands[3])
 			if err != nil {
 				return ""
@@ -235,14 +243,14 @@ func drinkCommand(command string) string {
 			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil {
 				no--
-				if len(orderNo[splitCommands[1]]) > no {
-					orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] += quantity
+				if len(orderNo[typ]) > no {
+					orderList[typ][orderNo[typ][no]] += quantity
 				}
 			} else {
 				if _, ok := orderList[splitCommands[2]]; !ok {
-					orderNo[splitCommands[1]] = append(orderNo[splitCommands[1]], splitCommands[2])
+					orderNo[typ] = append(orderNo[typ], splitCommands[2])
 				}
-				orderList[splitCommands[1]][splitCommands[2]] += quantity
+				orderList[typ][splitCommands[2]] += quantity
 			}
 		}
 
@@ -253,22 +261,30 @@ func drinkCommand(command string) string {
 		if l < 3 {
 			return ""
 		} else if l == 3 {
+			typ := convertType(splitCommands[1])
+			if typ == "" {
+				return ""
+			}
 			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil { //remove by order number
 				no--
 			} else {
-				for i, v := range orderNo[splitCommands[1]] { //find index
+				for i, v := range orderNo[typ] { //find index
 					if v == splitCommands[2] {
 						no = i
 						break
 					}
 				}
 			}
-			if _, ok := orderList[splitCommands[1]][orderNo[splitCommands[1]][no]]; ok {
-				delete(orderList[splitCommands[1]], orderNo[splitCommands[1]][no])
-				orderNo[splitCommands[1]] = removeIndex(orderNo[splitCommands[1]], no)
+			if _, ok := orderList[typ][orderNo[typ][no]]; ok {
+				delete(orderList[typ], orderNo[typ][no])
+				orderNo[typ] = removeIndex(orderNo[typ], no)
 			}
 		} else if l == 4 {
+			typ := convertType(splitCommands[1])
+			if typ == "" {
+				return ""
+			}
 			quantity, err := strconv.Atoi(splitCommands[3])
 			if err != nil {
 				return ""
@@ -277,19 +293,19 @@ func drinkCommand(command string) string {
 			if err == nil { //remove by order number
 				no--
 			} else {
-				for i, v := range orderNo[splitCommands[1]] { //find index
+				for i, v := range orderNo[typ] { //find index
 					if v == splitCommands[2] {
 						no = i
 						break
 					}
 				}
 			}
-			if orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] > quantity {
-				orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] -= quantity
+			if orderList[typ][orderNo[typ][no]] > quantity {
+				orderList[typ][orderNo[typ][no]] -= quantity
 			} else {
-				if _, ok := orderList[orderNo[splitCommands[1]][no]]; ok {
-					delete(orderList, orderNo[splitCommands[1]][no])
-					orderNo[splitCommands[1]] = removeIndex(orderNo[splitCommands[1]], no)
+				if _, ok := orderList[orderNo[typ][no]]; ok {
+					delete(orderList, orderNo[typ][no])
+					orderNo[typ] = removeIndex(orderNo[typ], no)
 				}
 			}
 		}
@@ -325,6 +341,17 @@ func makeResponse() string {
 	return resp
 }
 
+func convertType(typ string) string {
+	switch {
+	case typ == "ผ", strings.Contains(typ, "ผลไม้"):
+		return "ผ"
+	case typ == "น", strings.Contains(typ, "น้ำ"):
+		return "น"
+	case typ == "ข", strings.Contains(typ, "ขนม"):
+		return "ข"
+	}
+	return ""
+}
 func firstNChar(s string, n int) string {
 	i := 0
 	for j := range s {
