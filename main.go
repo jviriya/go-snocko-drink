@@ -46,7 +46,7 @@ func main() {
 
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
-	c.AddFunc("0 12 * * *", func() {
+	c.AddFunc("30 11 * * *", func() {
 		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
 		orderList = map[string]int{}
 		orderNo = []string{}
@@ -100,9 +100,9 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 							messaging_api.TextMessage{
 								Text: resp, //Modify text here
 							},
-							messaging_api.TextMessage{
-								Text: fmt.Sprintf("%v <%v>", e.Source.(webhook.GroupSource).GroupId, time.Now()),
-							},
+							//messaging_api.TextMessage{
+							//	Text: fmt.Sprintf("%v <%v>", e.Source.(webhook.GroupSource).GroupId, time.Now()),
+							//},
 						}
 
 						if additionalMsg != "" {
@@ -151,6 +151,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 }
 
 func drinkCommand(command string) string {
+	command = strings.ToLower(command)
 	additionalMsg = ""
 	switch {
 	case command == "เมนู", command == "menu":
