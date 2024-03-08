@@ -7,7 +7,7 @@ import (
 	"github.com/line/line-bot-sdk-go/v8/linebot"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
-	"github.com/robfig/cron"
+	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +20,7 @@ var (
 	orderList     = map[string]int{}
 	orderNo       []string
 	additionalMsg string
+	bangkokTZ     *time.Location
 )
 
 func main() {
@@ -37,48 +38,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//
-	//fmt.Println("test: ")
-	//
-	//txt := "พ asdf"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "พ 1"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "พ asdfd"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "พ asdf 2"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "ล 1 2"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "ล 2 1"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "ล asdf 1"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "ล 1"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
-	//
-	//txt = "พ asdf"
-	//fmt.Printf("%s", drinkCommand(txt))
-	//fmt.Println()
 
-	// routess
+	bangkokTZ, err = time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		log.Print(err)
+	}
 
-	c := cron.New()
+	c := cron.New(cron.WithLocation(bangkokTZ))
+
 	c.AddFunc("0 12 * * *", func() {
 		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
 		orderList = map[string]int{}
@@ -98,12 +65,13 @@ func main() {
 		pushMessages(bot, "ปิดจ้า !!!")
 	})
 
-	go c.Run()
+	c.Start()
 
 	router.GET("/ping", ping)
 	router.GET("/", handler)
 	router.POST("/callback", lineCallback(bot, channelSecret))
 	router.Run(":5000")
+	defer c.Stop()
 }
 
 func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.HandlerFunc {
@@ -143,7 +111,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 							})
 						}
 
-						if resp != "" {
+						if resp != "" && isNotWeekend() {
 							if _, err = bot.ReplyMessage(
 								&messaging_api.ReplyMessageRequest{
 									ReplyToken: e.ReplyToken,
@@ -325,15 +293,22 @@ func handler(c *gin.Context) {
 }
 
 func pushMessages(bot *messaging_api.MessagingApiAPI, message string) {
-	_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
-		To: os.Getenv("GROUP_ID"),
-		Messages: []messaging_api.MessageInterface{
-			messaging_api.TextMessage{Text: message},
-		},
-		NotificationDisabled:   true,
-		CustomAggregationUnits: nil,
-	}, "")
-	if err != nil {
-		log.Print(err)
+	if isNotWeekend() {
+		_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
+			To: os.Getenv("GROUP_ID"),
+			Messages: []messaging_api.MessageInterface{
+				messaging_api.TextMessage{Text: message},
+			},
+			NotificationDisabled:   true,
+			CustomAggregationUnits: nil,
+		}, "")
+		if err != nil {
+			log.Print(err)
+		}
 	}
+}
+
+func isNotWeekend() bool {
+	now := time.Now().In(bangkokTZ)
+	return !(now.Weekday() == time.Saturday || now.Weekday() == time.Sunday)
 }
