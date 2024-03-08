@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	orderList     = map[string]int{}
-	orderNo       []string
+	orderList     = map[string]map[string]int{}
+	orderNo       map[string][]string
 	additionalMsg string
 	bangkokTZ     *time.Location
 )
@@ -48,8 +48,8 @@ func main() {
 
 	c.AddFunc("30 11 * * *", func() {
 		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
-		orderList = map[string]int{}
-		orderNo = []string{}
+		orderList = map[string]map[string]int{}
+		orderNo = map[string][]string{}
 		additionalMsg = ""
 	})
 
@@ -160,45 +160,45 @@ func drinkCommand(command string) string {
 		additionalMsg = "ดูได้เลยจ้า"
 		return makeResponse()
 	case command == "เคลียร์", command == "clear":
-		orderList = map[string]int{}
-		orderNo = []string{}
+		orderList = map[string]map[string]int{}
+		orderNo = map[string][]string{}
 		additionalMsg = "clear แล้วจ้า"
 		return makeResponse()
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
-		if l == 1 {
+		if l < 3 {
 			return ""
-		} else if l == 2 {
-			no, err := strconv.Atoi(splitCommands[1])
+		} else if l == 3 {
+			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil {
 				no--
-				if len(orderNo) > no {
-					orderList[orderNo[no]] += 1
+				if len(orderNo[splitCommands[1]]) > no {
+					orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] += 1
 				}
 			} else {
-				if _, ok := orderList[splitCommands[1]]; !ok {
-					orderNo = append(orderNo, splitCommands[1])
+				if _, ok := orderList[splitCommands[1]][splitCommands[2]]; !ok {
+					orderNo[splitCommands[1]] = append(orderNo[splitCommands[1]], splitCommands[2])
 				}
-				orderList[splitCommands[1]] += 1
+				orderList[splitCommands[1]][splitCommands[2]] += 1
 			}
 
-		} else if l == 3 {
+		} else if l == 4 {
 			quantity, err := strconv.Atoi(splitCommands[2])
 			if err != nil {
 				return ""
 			}
-			no, err := strconv.Atoi(splitCommands[1])
+			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil {
 				no--
-				if len(orderNo) > no {
-					orderList[orderNo[no]] += quantity
+				if len(orderNo[splitCommands[1]]) > no {
+					orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] += quantity
 				}
 			} else {
-				if _, ok := orderList[splitCommands[1]]; !ok {
-					orderNo = append(orderNo, splitCommands[1])
+				if _, ok := orderList[splitCommands[2]]; !ok {
+					orderNo[splitCommands[1]] = append(orderNo[splitCommands[1]], splitCommands[2])
 				}
-				orderList[splitCommands[1]] += quantity
+				orderList[splitCommands[1]][splitCommands[2]] += quantity
 			}
 		}
 
@@ -206,46 +206,46 @@ func drinkCommand(command string) string {
 		additionalMsg = "รับทราบจ้า"
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
-		if l == 1 {
+		if l < 3 {
 			return ""
-		} else if l == 2 {
-			no, err := strconv.Atoi(splitCommands[1])
+		} else if l == 3 {
+			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil { //remove by order number
 				no--
 			} else {
-				for i, v := range orderNo { //find index
-					if v == splitCommands[1] {
+				for i, v := range orderNo[splitCommands[1]] { //find index
+					if v == splitCommands[2] {
 						no = i
 						break
 					}
 				}
 			}
-			if _, ok := orderList[orderNo[no]]; ok {
-				delete(orderList, orderNo[no])
-				orderNo = removeIndex(orderNo, no)
+			if _, ok := orderList[splitCommands[1]][orderNo[splitCommands[1]][no]]; ok {
+				delete(orderList[splitCommands[1]], orderNo[splitCommands[1]][no])
+				orderNo[splitCommands[1]] = removeIndex(orderNo[splitCommands[1]], no)
 			}
-		} else if l == 3 {
-			quantity, err := strconv.Atoi(splitCommands[2])
+		} else if l == 4 {
+			quantity, err := strconv.Atoi(splitCommands[3])
 			if err != nil {
 				return ""
 			}
-			no, err := strconv.Atoi(splitCommands[1])
+			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil { //remove by order number
 				no--
 			} else {
-				for i, v := range orderNo { //find index
-					if v == splitCommands[1] {
+				for i, v := range orderNo[splitCommands[1]] { //find index
+					if v == splitCommands[2] {
 						no = i
 						break
 					}
 				}
 			}
-			if orderList[orderNo[no]] > quantity {
-				orderList[orderNo[no]] -= quantity
+			if orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] > quantity {
+				orderList[splitCommands[1]][orderNo[splitCommands[1]][no]] -= quantity
 			} else {
-				if _, ok := orderList[orderNo[no]]; ok {
-					delete(orderList, orderNo[no])
-					orderNo = removeIndex(orderNo, no)
+				if _, ok := orderList[orderNo[splitCommands[1]][no]]; ok {
+					delete(orderList, orderNo[splitCommands[1]][no])
+					orderNo[splitCommands[1]] = removeIndex(orderNo[splitCommands[1]], no)
 				}
 			}
 		}
@@ -260,8 +260,18 @@ func drinkCommand(command string) string {
 
 func makeResponse() string {
 	resp := "รายการทั้งหมด\n---------------------\n"
-	for i, v := range orderNo {
-		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList[v])
+
+	resp += "ไซส์ L\n---------------------\n"
+	for i, v := range orderNo["น"] {
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["น"][v])
+	}
+	resp += "ขนม\n---------------------\n"
+	for i, v := range orderNo["ข"] {
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ข"][v])
+	}
+	resp += "น้ำผลไม้\n---------------------\n"
+	for i, v := range orderNo["ผ"] {
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ผ"][v])
 	}
 	return resp
 }
