@@ -310,5 +310,5 @@ func pushMessages(bot *messaging_api.MessagingApiAPI, message string) {
 
 func isNotWeekend() bool {
 	now := time.Now().In(bangkokTZ)
-	return !(now.Weekday() == time.Saturday || now.Weekday() == time.Sunday)
+	return now.Weekday() != time.Saturday && now.Weekday() != time.Sunday
 }
