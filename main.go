@@ -62,7 +62,7 @@ func main() {
 	})
 
 	c.AddFunc("0 13 * * *", func() {
-		pushMessages(bot, "ปิดจ้า !!!")
+		pushMessages(bot, fmt.Sprintf("ปิดจ้าา! ขอสรุปออเดอร์\n\n%v", makeResponse()))
 	})
 
 	c.Start()
