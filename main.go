@@ -61,34 +61,34 @@ func main() {
 	//}
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
-
-	com := "พ น เทส2 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
+	//
+	//com := "พ น เทส2 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
 
 	//com = "ล ผ 1 1"
 	//fmt.Println("TEST")
