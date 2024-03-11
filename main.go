@@ -52,10 +52,16 @@ func main() {
 		log.Print(err)
 	}
 
-	//com := "พ ผ เทส 2"
+	//com := "พ น เทส 2\nพ z หยก 2"
+	//
+	//comArr := strings.Split(com, "\n")
+	//
+	//for _, v := range comArr {
+	//	fmt.Println(drinkCommand(v))
+	//}
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
-	//
+
 	//com = "พ น เทส2 2"
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
@@ -129,7 +135,13 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 				switch message := e.Message.(type) {
 				case webhook.TextMessageContent:
 					//if strings.HasPrefix(message.Text, "#") {
-					resp := drinkCommand(message.Text)
+
+					texts := strings.Split(message.Text, "\n")
+
+					var resp string
+					for _, command := range texts {
+						resp = drinkCommand(command)
+					}
 
 					if resp != "" {
 						messages := []messaging_api.MessageInterface{
@@ -252,6 +264,9 @@ func drinkCommand(command string) string {
 				}
 				orderList[typ][splitCommands[2]] += quantity
 			}
+		} else {
+			additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
+			return ""
 		}
 
 	case firstNChar(command, 2) == "ล ", firstNChar(command, 3) == "ลบ ", firstNChar(command, 3) == "ลด ":
