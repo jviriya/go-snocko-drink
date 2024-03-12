@@ -89,10 +89,11 @@ func main() {
 	//com = "พ ตบขนมไทย เทส3"
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
-
+	//
 	//com = "ล ผ 1 1"
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
+	//fmt.Println("additionalMsg: " + additionalMsg)
 	//
 	//com = "clear"
 	//fmt.Println("TEST")
