@@ -66,6 +66,10 @@ func main() {
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
 	//
+	//com = "พ น เทส1 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+
 	//com = "พ ตบขนมไทย เทส3 2"
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
@@ -94,10 +98,10 @@ func main() {
 	//fmt.Println("TEST")
 	//fmt.Println(drinkCommand(com))
 	//fmt.Println("additionalMsg: " + additionalMsg)
-	//
-	//com = "clear"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
+
+	com = "clear"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
 
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
@@ -261,7 +265,6 @@ func drinkCommand(command string) string {
 				}
 				orderList[typ][splitCommands[2]] += 1
 			}
-			additionalMsg = fmt.Sprintf("รับออเดอร์จ้า %v จำนวน %v", splitCommands[1], no)
 		} else if l == 4 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
@@ -285,6 +288,8 @@ func drinkCommand(command string) string {
 				}
 				orderList[typ][splitCommands[2]] += quantity
 			}
+			additionalMsg = fmt.Sprintf("รับออเดอร์จ้า %v จำนวน %v", splitCommands[2], quantity)
+
 		} else {
 			additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 			return ""
@@ -361,19 +366,19 @@ func drinkCommand(command string) string {
 func makeResponse() string {
 	resp := "รายการทั้งหมด\n\n"
 
-	resp += fmt.Sprintf("น้ำไซส์ L จำนวน (%d).\n---------------------", len(orderNo["น"]))
+	resp += fmt.Sprintf("น้ำไซส์ L จำนวน (%d).\n---------------------", sumFn(orderList["น"]))
 	for i, v := range orderNo["น"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["น"][v])
 	}
 	resp += "\n\n"
 
-	resp += fmt.Sprintf("ขนม จำนวน (%d).\n---------------------", len(orderNo["ข"]))
+	resp += fmt.Sprintf("ขนม จำนวน (%d).\n---------------------", sumFn(orderList["ข"]))
 	for i, v := range orderNo["ข"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ข"][v])
 	}
 	resp += "\n\n"
 
-	resp += fmt.Sprintf("น้ำผลไม้ จำนวน (%d).\n---------------------", len(orderNo["ผ"]))
+	resp += fmt.Sprintf("น้ำผลไม้ จำนวน (%d).\n---------------------", sumFn(orderList["ผ"]))
 	for i, v := range orderNo["ผ"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ผ"][v])
 	}
@@ -438,4 +443,13 @@ func pushMessages(bot *messaging_api.MessagingApiAPI, message string) {
 func isNotWeekend() bool {
 	now := time.Now().In(bangkokTZ)
 	return now.Weekday() != time.Saturday && now.Weekday() != time.Sunday
+}
+
+func sumFn(e map[string]int) int {
+	sum := 0
+	for _, m := range e {
+		sum = sum + m
+	}
+
+	return sum
 }
