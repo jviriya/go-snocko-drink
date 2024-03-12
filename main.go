@@ -163,36 +163,33 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 						resp = drinkCommand(command)
 					}
 
+					messages := []messaging_api.MessageInterface{}
 					if resp != "" {
-						messages := []messaging_api.MessageInterface{
+						messages = []messaging_api.MessageInterface{
 							messaging_api.TextMessage{
 								Text: resp, //Modify text here
 							},
-							//messaging_api.TextMessage{
-							//	Text: fmt.Sprintf("%v <%v>", e.Source.(webhook.GroupSource).GroupId, time.Now()),
-							//},
 						}
+					}
+					if additionalMsg != "" {
+						messages = append(messages, messaging_api.TextMessage{
+							Text: additionalMsg,
+						})
+					}
 
-						if additionalMsg != "" {
-							messages = append(messages, messaging_api.TextMessage{
-								Text: additionalMsg,
-							})
-						}
-
-						if resp != "" && isNotWeekend() {
-							if _, err = bot.ReplyMessage(
-								&messaging_api.ReplyMessageRequest{
-									ReplyToken: e.ReplyToken,
-									Messages:   messages,
-								},
-							); err != nil {
-								log.Print(err)
-							} else {
-								log.Println("Sent text reply.")
-							}
+					if len(messages) > 0 && isNotWeekend() {
+						if _, err = bot.ReplyMessage(
+							&messaging_api.ReplyMessageRequest{
+								ReplyToken: e.ReplyToken,
+								Messages:   messages,
+							},
+						); err != nil {
+							log.Print(err)
 						} else {
-							log.Printf("Unsupported message content: %T\n", message.Text)
+							log.Println("Sent text reply.")
 						}
+					} else {
+						log.Printf("Unsupported message content: %T\n", message.Text)
 					}
 				case webhook.StickerMessageContent:
 					//replyMessage := fmt.Sprintf(
