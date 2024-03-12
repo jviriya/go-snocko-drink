@@ -260,7 +260,7 @@ func drinkCommand(command string) string {
 				}
 				orderList[typ][splitCommands[2]] += 1
 			}
-
+			additionalMsg = fmt.Sprintf("รับออเดอร์จ้า %v จำนวน %v", splitCommands[1], no)
 		} else if l == 4 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
@@ -354,19 +354,19 @@ func drinkCommand(command string) string {
 func makeResponse() string {
 	resp := "รายการทั้งหมด\n\n"
 
-	resp += "ไซส์ L\n---------------------"
+	resp += fmt.Sprintf("น้ำไซส์ L จำนวน (%d).\n---------------------", len(orderNo["น"]))
 	for i, v := range orderNo["น"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["น"][v])
 	}
 	resp += "\n\n"
 
-	resp += "ขนม\n---------------------"
+	resp += fmt.Sprintf("ขนม จำนวน (%d).\n---------------------", len(orderNo["ข"]))
 	for i, v := range orderNo["ข"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ข"][v])
 	}
 	resp += "\n\n"
 
-	resp += "น้ำผลไม้\n---------------------"
+	resp += fmt.Sprintf("น้ำผลไม้ จำนวน (%d).\n---------------------", len(orderNo["ผ"]))
 	for i, v := range orderNo["ผ"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ผ"][v])
 	}
