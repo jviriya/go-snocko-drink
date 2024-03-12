@@ -246,6 +246,7 @@ func drinkCommand(command string) string {
 		} else if l == 3 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
+				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 				return ""
 			}
 			no, err := strconv.Atoi(splitCommands[2])
@@ -264,10 +265,12 @@ func drinkCommand(command string) string {
 		} else if l == 4 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
+				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 				return ""
 			}
 			quantity, err := strconv.Atoi(splitCommands[3])
 			if err != nil {
+				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 				return ""
 			}
 			no, err := strconv.Atoi(splitCommands[2])
@@ -296,6 +299,7 @@ func drinkCommand(command string) string {
 		} else if l == 3 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
+				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 				return ""
 			}
 			no, err := strconv.Atoi(splitCommands[2])
@@ -316,10 +320,12 @@ func drinkCommand(command string) string {
 		} else if l == 4 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
+				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 				return ""
 			}
 			quantity, err := strconv.Atoi(splitCommands[3])
 			if err != nil {
+				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 				return ""
 			}
 			no, err := strconv.Atoi(splitCommands[2])
@@ -345,6 +351,7 @@ func drinkCommand(command string) string {
 
 	default:
 		log.Printf("Unsupported message content: %T\n", command)
+		additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 		return ""
 	}
 
