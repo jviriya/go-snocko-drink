@@ -356,7 +356,6 @@ func drinkCommand(command string) string {
 
 	default:
 		log.Printf("Unsupported message content: %T\n", command)
-		additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 		return ""
 	}
 
