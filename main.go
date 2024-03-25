@@ -45,67 +45,67 @@ func main() {
 		log.Print(err)
 	}
 
-	groupId = "test"
-	if _, ok := orderList[groupId]; !ok {
-		orderList[groupId] = map[string]map[string]int{
-			"น": map[string]int{},
-			"ข": map[string]int{},
-			"ผ": map[string]int{},
-		}
-	}
-	if _, ok := orderNo[groupId]; !ok {
-		orderNo[groupId] = map[string][]string{
-			"น": []string{},
-			"ข": []string{},
-			"ผ": []string{},
-		}
-	}
-	com := "พ น เทส 2\nพ z หยก 2"
-
-	comArr := strings.Split(com, "\n")
-
-	for _, v := range comArr {
-		fmt.Println(drinkCommand(v))
-	}
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ น เทส2 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ น เทส1 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3 2"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "พ ตบขนมไทย เทส3"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-
-	com = "ล ผ 1 1"
-	fmt.Println("TEST")
-	fmt.Println(drinkCommand(com))
-	fmt.Println("additionalMsg: " + additionalMsg)
+	//groupId = "test"
+	//if _, ok := orderList[groupId]; !ok {
+	//	orderList[groupId] = map[string]map[string]int{
+	//		"น": map[string]int{},
+	//		"ข": map[string]int{},
+	//		"ผ": map[string]int{},
+	//	}
+	//}
+	//if _, ok := orderNo[groupId]; !ok {
+	//	orderNo[groupId] = map[string][]string{
+	//		"น": []string{},
+	//		"ข": []string{},
+	//		"ผ": []string{},
+	//	}
+	//}
+	//com := "พ น เทส 2\nพ z หยก 2"
+	//
+	//comArr := strings.Split(com, "\n")
+	//
+	//for _, v := range comArr {
+	//	fmt.Println(drinkCommand(v))
+	//}
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ น เทส2 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ น เทส1 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3 2"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "พ ตบขนมไทย เทส3"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//
+	//com = "ล ผ 1 1"
+	//fmt.Println("TEST")
+	//fmt.Println(drinkCommand(com))
+	//fmt.Println("additionalMsg: " + additionalMsg)
 
 	//com = "clear"
 	//fmt.Println("TEST")
@@ -161,7 +161,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 				case webhook.TextMessageContent:
 					//if strings.HasPrefix(message.Text, "#") {
 					//groupId = e.Source.(webhook.GroupSource).GroupId
-					groupId = "test"
+					//groupId = "test"
 					if _, ok := orderList[groupId]; !ok {
 						orderList[groupId] = map[string]map[string]int{
 							"น": map[string]int{},
@@ -245,8 +245,16 @@ func drinkCommand(command string) string {
 		additionalMsg = "ดูได้เลยจ้า"
 		return makeResponse()
 	case command == "เคลียร์", command == "clear":
-		orderList = map[string]map[string]map[string]int{}
-		orderNo = map[string]map[string][]string{}
+		orderList[groupId] = map[string]map[string]int{
+			"น": map[string]int{},
+			"ข": map[string]int{},
+			"ผ": map[string]int{},
+		}
+		orderNo[groupId] = map[string][]string{
+			"น": []string{},
+			"ข": []string{},
+			"ผ": []string{},
+		}
 		additionalMsg = "clear แล้วจ้า"
 		return makeResponse()
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
