@@ -17,18 +17,11 @@ import (
 )
 
 var (
-	orderList = map[string]map[string]int{
-		"น": map[string]int{},
-		"ข": map[string]int{},
-		"ผ": map[string]int{},
-	}
-	orderNo = map[string][]string{
-		"น": []string{},
-		"ข": []string{},
-		"ผ": []string{},
-	}
+	orderList     = map[string]map[string]map[string]int{}
+	orderNo       = map[string]map[string][]string{}
 	additionalMsg string
 	bangkokTZ     *time.Location
+	groupId       string
 )
 
 func main() {
@@ -52,52 +45,67 @@ func main() {
 		log.Print(err)
 	}
 
-	//com := "พ น เทส 2\nพ z หยก 2"
-	//
-	//comArr := strings.Split(com, "\n")
-	//
-	//for _, v := range comArr {
-	//	fmt.Println(drinkCommand(v))
-	//}
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com := "พ น เทส2 2"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com = "พ น เทส1 2"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
+	groupId = "test"
+	if _, ok := orderList[groupId]; !ok {
+		orderList[groupId] = map[string]map[string]int{
+			"น": map[string]int{},
+			"ข": map[string]int{},
+			"ผ": map[string]int{},
+		}
+	}
+	if _, ok := orderNo[groupId]; !ok {
+		orderNo[groupId] = map[string][]string{
+			"น": []string{},
+			"ข": []string{},
+			"ผ": []string{},
+		}
+	}
+	com := "พ น เทส 2\nพ z หยก 2"
 
-	//com = "พ ตบขนมไทย เทส3 2"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com = "พ ตบขนมไทย เทส3 2"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com = "พ ตบขนมไทย เทส3 2"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com = "พ ตบขนมไทย เทส3"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com = "พ ตบขนมไทย เทส3"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com = "พ ตบขนมไทย เทส3"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//
-	//com = "ล ผ 1 1"
-	//fmt.Println("TEST")
-	//fmt.Println(drinkCommand(com))
-	//fmt.Println("additionalMsg: " + additionalMsg)
+	comArr := strings.Split(com, "\n")
+
+	for _, v := range comArr {
+		fmt.Println(drinkCommand(v))
+	}
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ น เทส2 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ น เทส1 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ ตบขนมไทย เทส3 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ ตบขนมไทย เทส3 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ ตบขนมไทย เทส3 2"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ ตบขนมไทย เทส3"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ ตบขนมไทย เทส3"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "พ ตบขนมไทย เทส3"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+
+	com = "ล ผ 1 1"
+	fmt.Println("TEST")
+	fmt.Println(drinkCommand(com))
+	fmt.Println("additionalMsg: " + additionalMsg)
 
 	//com = "clear"
 	//fmt.Println("TEST")
@@ -107,16 +115,8 @@ func main() {
 
 	c.AddFunc("30 11 * * *", func() {
 		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
-		orderList = map[string]map[string]int{
-			"น": map[string]int{},
-			"ข": map[string]int{},
-			"ผ": map[string]int{},
-		}
-		orderNo = map[string][]string{
-			"น": []string{},
-			"ข": []string{},
-			"ผ": []string{},
-		}
+		orderList = map[string]map[string]map[string]int{}
+		orderNo = map[string]map[string][]string{}
 		additionalMsg = ""
 	})
 
@@ -160,7 +160,22 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 				switch message := e.Message.(type) {
 				case webhook.TextMessageContent:
 					//if strings.HasPrefix(message.Text, "#") {
-
+					//groupId = e.Source.(webhook.GroupSource).GroupId
+					groupId = "test"
+					if _, ok := orderList[groupId]; !ok {
+						orderList[groupId] = map[string]map[string]int{
+							"น": map[string]int{},
+							"ข": map[string]int{},
+							"ผ": map[string]int{},
+						}
+					}
+					if _, ok := orderNo[groupId]; !ok {
+						orderNo[groupId] = map[string][]string{
+							"น": []string{},
+							"ข": []string{},
+							"ผ": []string{},
+						}
+					}
 					texts := strings.Split(message.Text, "\n")
 
 					var resp string
@@ -230,16 +245,8 @@ func drinkCommand(command string) string {
 		additionalMsg = "ดูได้เลยจ้า"
 		return makeResponse()
 	case command == "เคลียร์", command == "clear":
-		orderList = map[string]map[string]int{
-			"น": map[string]int{},
-			"ข": map[string]int{},
-			"ผ": map[string]int{},
-		}
-		orderNo = map[string][]string{
-			"น": []string{},
-			"ข": []string{},
-			"ผ": []string{},
-		}
+		orderList = map[string]map[string]map[string]int{}
+		orderNo = map[string]map[string][]string{}
 		additionalMsg = "clear แล้วจ้า"
 		return makeResponse()
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
@@ -256,14 +263,14 @@ func drinkCommand(command string) string {
 			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil {
 				no--
-				if len(orderNo[typ]) > no {
-					orderList[typ][orderNo[typ][no]] += 1
+				if len(orderNo[groupId][typ]) > no {
+					orderList[groupId][typ][orderNo[groupId][typ][no]] += 1
 				}
 			} else {
-				if _, ok := orderList[typ][splitCommands[2]]; !ok {
-					orderNo[typ] = append(orderNo[typ], splitCommands[2])
+				if _, ok := orderList[groupId][typ][splitCommands[2]]; !ok {
+					orderNo[groupId][typ] = append(orderNo[groupId][typ], splitCommands[2])
 				}
-				orderList[typ][splitCommands[2]] += 1
+				orderList[groupId][typ][splitCommands[2]] += 1
 			}
 		} else if l == 4 {
 			typ := convertType(splitCommands[1])
@@ -279,14 +286,14 @@ func drinkCommand(command string) string {
 			no, err := strconv.Atoi(splitCommands[2])
 			if err == nil {
 				no--
-				if len(orderNo[typ]) > no {
-					orderList[typ][orderNo[typ][no]] += quantity
+				if len(orderNo[groupId][typ]) > no {
+					orderList[groupId][typ][orderNo[groupId][typ][no]] += quantity
 				}
 			} else {
-				if _, ok := orderList[typ][splitCommands[2]]; !ok {
-					orderNo[typ] = append(orderNo[typ], splitCommands[2])
+				if _, ok := orderList[groupId][typ][splitCommands[2]]; !ok {
+					orderNo[groupId][typ] = append(orderNo[groupId][typ], splitCommands[2])
 				}
-				orderList[typ][splitCommands[2]] += quantity
+				orderList[groupId][typ][splitCommands[2]] += quantity
 			}
 			additionalMsg = fmt.Sprintf("รับออเดอร์จ้า %v จำนวน %v", splitCommands[2], quantity)
 
@@ -311,16 +318,16 @@ func drinkCommand(command string) string {
 			if err == nil { //remove by order number
 				no--
 			} else {
-				for i, v := range orderNo[typ] { //find index
+				for i, v := range orderNo[groupId][typ] { //find index
 					if v == splitCommands[2] {
 						no = i
 						break
 					}
 				}
 			}
-			if _, ok := orderList[typ][orderNo[typ][no]]; ok {
-				delete(orderList[typ], orderNo[typ][no])
-				orderNo[typ] = removeIndex(orderNo[typ], no)
+			if _, ok := orderList[groupId][typ][orderNo[groupId][typ][no]]; ok {
+				delete(orderList[groupId][typ], orderNo[groupId][typ][no])
+				orderNo[groupId][typ] = removeIndex(orderNo[groupId][typ], no)
 			}
 		} else if l == 4 {
 			typ := convertType(splitCommands[1])
@@ -337,19 +344,21 @@ func drinkCommand(command string) string {
 			if err == nil { //remove by order number
 				no--
 			} else {
-				for i, v := range orderNo[typ] { //find index
+				for i, v := range orderNo[groupId][typ] { //find index
 					if v == splitCommands[2] {
 						no = i
 						break
 					}
 				}
 			}
-			if orderList[typ][orderNo[typ][no]] > quantity {
-				orderList[typ][orderNo[typ][no]] -= quantity
-			} else {
-				if _, ok := orderList[orderNo[typ][no]]; ok {
-					delete(orderList, orderNo[typ][no])
-					orderNo[typ] = removeIndex(orderNo[typ], no)
+			if len(orderNo[groupId][typ]) > 0 {
+				if orderList[groupId][typ][orderNo[groupId][typ][no]] > quantity {
+					orderList[groupId][typ][orderNo[groupId][typ][no]] -= quantity
+				} else {
+					if _, ok := orderList[groupId][orderNo[groupId][typ][no]]; ok {
+						delete(orderList[groupId], orderNo[groupId][typ][no])
+						orderNo[groupId][typ] = removeIndex(orderNo[groupId][typ], no)
+					}
 				}
 			}
 		}
@@ -365,21 +374,21 @@ func drinkCommand(command string) string {
 func makeResponse() string {
 	resp := "รายการทั้งหมด\n\n"
 
-	resp += fmt.Sprintf("น้ำไซส์ L จำนวน (%d).\n---------------------", sumFn(orderList["น"]))
-	for i, v := range orderNo["น"] {
-		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["น"][v])
+	resp += fmt.Sprintf("น้ำไซส์ L จำนวน (%d).\n---------------------", sumFn(orderList[groupId]["น"]))
+	for i, v := range orderNo[groupId]["น"] {
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList[groupId]["น"][v])
 	}
 	resp += "\n\n"
 
-	resp += fmt.Sprintf("ขนม จำนวน (%d).\n---------------------", sumFn(orderList["ข"]))
-	for i, v := range orderNo["ข"] {
-		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ข"][v])
+	resp += fmt.Sprintf("ขนม จำนวน (%d).\n---------------------", sumFn(orderList[groupId]["ข"]))
+	for i, v := range orderNo[groupId]["ข"] {
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList[groupId]["ข"][v])
 	}
 	resp += "\n\n"
 
-	resp += fmt.Sprintf("น้ำผลไม้ จำนวน (%d).\n---------------------", sumFn(orderList["ผ"]))
-	for i, v := range orderNo["ผ"] {
-		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList["ผ"][v])
+	resp += fmt.Sprintf("น้ำผลไม้ จำนวน (%d).\n---------------------", sumFn(orderList[groupId]["ผ"]))
+	for i, v := range orderNo[groupId]["ผ"] {
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList[groupId]["ผ"][v])
 	}
 	resp += "\n"
 	return resp
