@@ -8,6 +8,7 @@ import (
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 	"github.com/robfig/cron/v3"
+	"golang.org/x/exp/slices"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +23,7 @@ var (
 	additionalMsg string
 	bangkokTZ     *time.Location
 	groupId       string
+	groupsId      []string
 )
 
 func main() {
@@ -113,11 +115,15 @@ func main() {
 
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
+	c.AddFunc("59 23 * * *", func() {
+		for _, gid := range groupsId {
+			clearWithGid(gid)
+		}
+		additionalMsg = ""
+	})
+
 	c.AddFunc("30 11 * * *", func() {
 		pushMessages(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
-		orderList = map[string]map[string]map[string]int{}
-		orderNo = map[string]map[string][]string{}
-		additionalMsg = ""
 	})
 
 	c.AddFunc("50 12 * * *", func() {
@@ -160,7 +166,13 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 				switch message := e.Message.(type) {
 				case webhook.TextMessageContent:
 					//if strings.HasPrefix(message.Text, "#") {
-					//groupId = e.Source.(webhook.GroupSource).GroupId
+					groupId = e.Source.(webhook.GroupSource).GroupId
+
+					found := slices.Contains(groupsId, groupId)
+					if !found {
+						groupsId = append(groupsId, groupId)
+					}
+
 					//groupId = "test"
 					if _, ok := orderList[groupId]; !ok {
 						orderList[groupId] = map[string]map[string]int{
@@ -245,16 +257,7 @@ func drinkCommand(command string) string {
 		additionalMsg = "ดูได้เลยจ้า"
 		return makeResponse()
 	case command == "เคลียร์", command == "clear":
-		orderList[groupId] = map[string]map[string]int{
-			"น": map[string]int{},
-			"ข": map[string]int{},
-			"ผ": map[string]int{},
-		}
-		orderNo[groupId] = map[string][]string{
-			"น": []string{},
-			"ข": []string{},
-			"ผ": []string{},
-		}
+		clear()
 		additionalMsg = "clear แล้วจ้า"
 		return makeResponse()
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
@@ -379,6 +382,32 @@ func drinkCommand(command string) string {
 	return makeResponse()
 }
 
+func clear() {
+	orderList[groupId] = map[string]map[string]int{
+		"น": map[string]int{},
+		"ข": map[string]int{},
+		"ผ": map[string]int{},
+	}
+	orderNo[groupId] = map[string][]string{
+		"น": []string{},
+		"ข": []string{},
+		"ผ": []string{},
+	}
+}
+
+func clearWithGid(gid string) {
+	orderList[gid] = map[string]map[string]int{
+		"น": map[string]int{},
+		"ข": map[string]int{},
+		"ผ": map[string]int{},
+	}
+	orderNo[gid] = map[string][]string{
+		"น": []string{},
+		"ข": []string{},
+		"ผ": []string{},
+	}
+}
+
 func makeResponse() string {
 	resp := "รายการทั้งหมด\n\n"
 
@@ -398,7 +427,8 @@ func makeResponse() string {
 	for i, v := range orderNo[groupId]["ผ"] {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v, orderList[groupId]["ผ"][v])
 	}
-	resp += "\n"
+	resp += "\n---------------------\n"
+	resp += fmt.Sprintf("%v\n", groupId)
 	return resp
 }
 
@@ -442,16 +472,19 @@ func handler(c *gin.Context) {
 
 func pushMessages(bot *messaging_api.MessagingApiAPI, message string) {
 	if isNotWeekend() {
-		_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
-			To: os.Getenv("GROUP_ID"),
-			Messages: []messaging_api.MessageInterface{
-				messaging_api.TextMessage{Text: message},
-			},
-			NotificationDisabled:   true,
-			CustomAggregationUnits: nil,
-		}, "")
-		if err != nil {
-			log.Print(err)
+		for _, gid := range groupsId {
+			_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
+				To: gid,
+				Messages: []messaging_api.MessageInterface{
+					messaging_api.TextMessage{Text: message},
+				},
+				NotificationDisabled:   true,
+				CustomAggregationUnits: nil,
+			}, "")
+
+			if err != nil {
+				log.Print(err)
+			}
 		}
 	}
 }
