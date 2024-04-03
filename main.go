@@ -23,7 +23,7 @@ var (
 	additionalMsg string
 	bangkokTZ     *time.Location
 	groupId       string
-	groupsId      []string
+	groupIds      []string
 )
 
 func main() {
@@ -116,7 +116,7 @@ func main() {
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
 	c.AddFunc("59 23 * * *", func() {
-		for _, gid := range groupsId {
+		for _, gid := range groupIds {
 			clearWithGid(gid)
 		}
 		additionalMsg = ""
@@ -135,7 +135,7 @@ func main() {
 	})
 
 	c.AddFunc("0 13 * * *", func() {
-		pushMessages(bot, fmt.Sprintf("ปิดจ้าา! ขอสรุปออเดอร์\n\n%v", makeResponse()))
+		pushMessagesByGroupIds(bot)
 	})
 
 	c.Start()
@@ -168,9 +168,9 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 					//if strings.HasPrefix(message.Text, "#") {
 					groupId = e.Source.(webhook.GroupSource).GroupId
 
-					found := slices.Contains(groupsId, groupId)
+					found := slices.Contains(groupIds, groupId)
 					if !found {
-						groupsId = append(groupsId, groupId)
+						groupIds = append(groupIds, groupId)
 					}
 
 					//groupId = "test"
@@ -472,11 +472,31 @@ func handler(c *gin.Context) {
 
 func pushMessages(bot *messaging_api.MessagingApiAPI, message string) {
 	if isNotWeekend() {
-		for _, gid := range groupsId {
+		for _, gid := range groupIds {
 			_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
 				To: gid,
 				Messages: []messaging_api.MessageInterface{
 					messaging_api.TextMessage{Text: message},
+				},
+				NotificationDisabled:   true,
+				CustomAggregationUnits: nil,
+			}, "")
+
+			if err != nil {
+				log.Print(err)
+			}
+		}
+	}
+}
+
+func pushMessagesByGroupIds(bot *messaging_api.MessagingApiAPI) {
+	if isNotWeekend() {
+		for _, gid := range groupIds {
+			groupId = gid
+			_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
+				To: gid,
+				Messages: []messaging_api.MessageInterface{
+					messaging_api.TextMessage{Text: makeResponse()},
 				},
 				NotificationDisabled:   true,
 				CustomAggregationUnits: nil,
