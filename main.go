@@ -23,6 +23,7 @@ type GroupOrderInterface interface {
 	RemoveOrder(v OrderDetails, t string)
 	RemoveOrderByIndex(index, quantity int, t string)
 	ClearOrder()
+	GetOrderNameByIndex(i int, t string) string
 }
 
 type Group struct {
@@ -44,6 +45,7 @@ var (
 	allGroup      = map[string]GroupOrderInterface{}
 	bangkokTZ     *time.Location
 	additionalMsg = ""
+	reply         = false
 )
 
 func (g *Group) AddOrder(v []OrderDetails, t string) {
@@ -96,6 +98,19 @@ func (g *Group) ClearOrder() {
 	g.FruitOrders = []OrderDetails{}
 }
 
+func (g *Group) GetOrderNameByIndex(i int, t string) string {
+	switch t {
+	case Drink:
+		return g.DrinksOrders[i-1].Name
+	case Snack:
+		return g.SnackOrders[i-1].Name
+	case Fruit:
+		return g.FruitOrders[i-1].Name
+	}
+
+	return ""
+}
+
 func (g *Group) String() string {
 	resp := "รายการทั้งหมด\n\n"
 
@@ -126,27 +141,17 @@ func newOrderByGroupId(groupId string) GroupOrderInterface {
 
 func main() {
 	//g1 := "group1"
-	//
 	//allGroup[g1] = newOrderByGroupId(g1)
 	//
-	//allGroup[g1].AddOrder([]OrderDetails{{
-	//	Name:     "milk",
-	//	Quantity: 1,
-	//}}, Drink)
+	//drinkCommand("พ น นม 1", g1)
+	//drinkCommand("พ น นม", g1)
+	//drinkCommand("พ น 1", g1)
+	//fmt.Println(additionalMsg)
 	//
-	//allGroup[g1].AddOrder([]OrderDetails{{
-	//	Name:     "tea",
-	//	Quantity: 1,
-	//}}, Drink)
-	//
-	//allGroup[g1].AddOrderByIndex(2, 1, Drink)
-	//allGroup[g1].AddOrderByIndex(1, 1, Drink)
-	//allGroup[g1].RemoveOrderByIndex(1, 1, Drink)
-	//
-	//str := fmt.Sprint(allGroup[g1])
-	//
-	//fmt.Println(str)
+	//drinkCommand("ล น 1 1", g1)
+	//drinkCommand("ล น นม 1", g1)
 
+	//fmt.Println(allGroup[g1])
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	// load .env file
@@ -260,7 +265,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 						})
 					}
 
-					if len(messages) > 0 && isNotWeekend() {
+					if len(messages) > 0 && isNotWeekend() && reply == true {
 						if _, err = bot.ReplyMessage(
 							&messaging_api.ReplyMessageRequest{
 								ReplyToken: e.ReplyToken,
@@ -287,6 +292,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 func drinkCommand(command, groupId string) {
 	command = strings.ToLower(command)
 	additionalMsg = ""
+	reply = true
 	switch {
 	case command == "เมนู", command == "menu":
 		additionalMsg = "ดูใน Albums เลยจ้า"
@@ -301,28 +307,15 @@ func drinkCommand(command, groupId string) {
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
-		if l < 3 {
+
+		if l < 3 || l > 4 {
+			additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 			return
-		} else if l == 3 {
-			typ := convertType(splitCommands[1])
-			if typ == "" {
-				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
-				return
+		} else {
+			// if len is 3 add quantity 1
+			if l == 3 {
+				splitCommands = append(splitCommands, "1")
 			}
-
-			orderN, err := strconv.Atoi(splitCommands[2])
-			if err == nil {
-				allGroup[groupId].AddOrderByIndex(orderN, 1, typ)
-			} else {
-				allGroup[groupId].AddOrder([]OrderDetails{
-					{
-						Name:     splitCommands[2],
-						Quantity: 1,
-					},
-				}, typ)
-			}
-
-		} else if l == 4 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
 				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
@@ -337,6 +330,7 @@ func drinkCommand(command, groupId string) {
 			orderN, err := strconv.Atoi(splitCommands[2])
 			if err == nil {
 				allGroup[groupId].AddOrderByIndex(orderN, quantity, typ)
+				splitCommands[2] = allGroup[groupId].GetOrderNameByIndex(orderN, typ)
 			} else {
 				allGroup[groupId].AddOrder([]OrderDetails{
 					{
@@ -347,43 +341,32 @@ func drinkCommand(command, groupId string) {
 			}
 
 			additionalMsg = fmt.Sprintf("รับออเดอร์จ้า %v จำนวน %v", splitCommands[2], quantity)
-
-		} else {
-			additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
-			return
 		}
 
 	case firstNChar(command, 2) == "ล ", firstNChar(command, 3) == "ลบ ", firstNChar(command, 3) == "ลด ":
 		additionalMsg = "รับทราบจ้า"
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
-		if l < 3 {
+
+		if l < 3 || l > 4 {
+			additionalMsg = "เกิดข้อผิดพลาด กรุณาทำรายการใหม่"
 			return
-		} else if l == 3 {
-			typ := convertType(splitCommands[1])
-			if typ == "" {
-				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
-				return
-			}
-
-			orderN, err := strconv.Atoi(splitCommands[2])
-			if err == nil {
-				allGroup[groupId].RemoveOrderByIndex(orderN, -1, typ)
+		} else {
+			quantity := 0
+			if l == 3 {
+				quantity = -1
 			} else {
-				allGroup[groupId].RemoveOrder(OrderDetails{
-					Name:     splitCommands[2],
-					Quantity: -1,
-				}, typ)
+				q, err := strconv.Atoi(splitCommands[3])
+				if err != nil {
+					additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
+					return
+				}
+
+				quantity = q
 			}
 
-		} else if l == 4 {
 			typ := convertType(splitCommands[1])
 			if typ == "" {
-				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
-				return
-			}
-			quantity, err := strconv.Atoi(splitCommands[3])
-			if err != nil {
 				additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
 				return
 			}
@@ -400,6 +383,7 @@ func drinkCommand(command, groupId string) {
 		}
 
 	default:
+		reply = false
 		log.Printf("Unsupported message content: %T\n", command)
 		return
 	}
