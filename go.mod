@@ -7,7 +7,6 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/line/line-bot-sdk-go/v8 v8.2.0
 	github.com/robfig/cron/v3 v3.0.1
-	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
 )
 
 require (

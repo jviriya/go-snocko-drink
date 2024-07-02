@@ -181,22 +181,20 @@ func main() {
 		additionalMsg = ""
 	})
 
-	c.AddFunc("30 11 * * *", func() {
-		pushMessagesAllGroup(bot, "สั่งน้ำจ้าปิดบ่ายโมง!!!")
+	c.AddFunc("30 10 * * *", func() {
+		pushMessagesAllGroup(bot, "สั่งน้ำจ้าปิดเที่ยงครึ่งงง!!!")
 	})
 
-	c.AddFunc("50 12 * * *", func() {
-		pushMessagesAllGroup(bot, "อีก 10 นาทีปิดแล้วนาจา !!!")
-	})
-
-	c.AddFunc("55 12 * * *", func() {
-		pushMessagesAllGroup(bot, "อีก 5 นาทีปิดแล้วนาจา !!!")
-	})
+	//c.AddFunc("50 12 * * *", func() {
+	//	pushMessagesAllGroup(bot, "อีก 10 นาทีปิดแล้วนาจา !!!")
+	//})
+	//
+	//c.AddFunc("55 12 * * *", func() {
+	//	pushMessagesAllGroup(bot, "อีก 5 นาทีปิดแล้วนาจา !!!")
+	//})
 
 	c.AddFunc("0 13 * * *", func() {
-		for gid, _ := range allGroup {
-			pushMessagesAllGroup(bot, fmt.Sprint(allGroup[gid]))
-		}
+		pushMessagesOrderSummary(bot)
 	})
 
 	c.Start()
@@ -496,6 +494,25 @@ func pushMessagesAllGroup(bot *messaging_api.MessagingApiAPI, msg string) {
 				To: gid,
 				Messages: []messaging_api.MessageInterface{
 					messaging_api.TextMessage{Text: msg},
+				},
+				NotificationDisabled:   true,
+				CustomAggregationUnits: nil,
+			}, "")
+
+			if err != nil {
+				log.Print(err)
+			}
+		}
+	}
+}
+
+func pushMessagesOrderSummary(bot *messaging_api.MessagingApiAPI) {
+	if isNotWeekend() {
+		for gid, v := range allGroup {
+			_, err := bot.PushMessage(&messaging_api.PushMessageRequest{
+				To: gid,
+				Messages: []messaging_api.MessageInterface{
+					messaging_api.TextMessage{Text: fmt.Sprint(v)},
 				},
 				NotificationDisabled:   true,
 				CustomAggregationUnits: nil,
