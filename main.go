@@ -193,7 +193,7 @@ func main() {
 	//	pushMessagesAllGroup(bot, "อีก 5 นาทีปิดแล้วนาจา !!!")
 	//})
 
-	c.AddFunc("0 13 * * *", func() {
+	c.AddFunc("30 12 * * *", func() {
 		pushMessagesOrderSummary(bot)
 	})
 
