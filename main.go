@@ -46,6 +46,7 @@ var (
 	bangkokTZ     *time.Location
 	additionalMsg = ""
 	reply         = false
+	goTime        time.Time
 )
 
 func (g *Group) AddOrder(v []OrderDetails, t string) {
@@ -172,6 +173,8 @@ func main() {
 		log.Print(err)
 	}
 
+	goTime = time.Now().In(bangkokTZ)
+
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
 	c.AddFunc("59 23 * * *", func() {
@@ -286,8 +289,6 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 		}
 	}
 }
-
-var goTime = time.Now()
 
 func drinkCommand(command, groupId string) {
 	command = strings.ToLower(command)
