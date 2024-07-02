@@ -287,11 +287,16 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 	}
 }
 
+var goTime = time.Now()
+
 func drinkCommand(command, groupId string) {
 	command = strings.ToLower(command)
 	additionalMsg = ""
 	reply = true
 	switch {
+	case command == "ping":
+		additionalMsg = fmt.Sprintf("[StartTime: %s]", goTime.Format("2006-01-02 15:04:05.000"))
+		return
 	case command == "เมนู", command == "menu":
 		additionalMsg = "ดูใน Albums เลยจ้า"
 		return
