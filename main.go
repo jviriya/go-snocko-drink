@@ -23,14 +23,16 @@ type GroupOrderInterface interface {
 	RemoveOrder(v OrderDetails, t string)
 	RemoveOrderByIndex(index, quantity int, t string)
 	ClearOrder()
+	MovePreOrder()
 	GetOrderNameByIndex(i int, t string) string
 }
 
 type Group struct {
-	DrinksOrders []OrderDetails
-	SnackOrders  []OrderDetails
-	FruitOrders  []OrderDetails
-	GroupId      string
+	DrinksOrders   []OrderDetails
+	SnackOrders    []OrderDetails
+	FruitOrders    []OrderDetails
+	SnackPreOrders []OrderDetails
+	GroupId        string
 }
 
 type OrderDetails struct {
@@ -42,11 +44,13 @@ var (
 	Drink         = "D"
 	Snack         = "S"
 	Fruit         = "F"
+	SnackPre      = "P"
 	allGroup      = map[string]GroupOrderInterface{}
 	bangkokTZ     *time.Location
 	additionalMsg = ""
 	reply         = false
 	goTime        time.Time
+	preOrderTime  time.Time
 )
 
 func (g *Group) AddOrder(v []OrderDetails, t string) {
@@ -57,6 +61,8 @@ func (g *Group) AddOrder(v []OrderDetails, t string) {
 		increaseOrder(v, &g.SnackOrders)
 	case Fruit:
 		increaseOrder(v, &g.FruitOrders)
+	case SnackPre:
+		increaseOrder(v, &g.SnackPreOrders)
 	}
 }
 
@@ -68,6 +74,8 @@ func (g *Group) AddOrderByIndex(index, quantity int, t string) {
 		increaseOrderByIndex(index-1, quantity, &g.SnackOrders)
 	case Fruit:
 		increaseOrderByIndex(index-1, quantity, &g.FruitOrders)
+	case SnackPre:
+		increaseOrderByIndex(index-1, quantity, &g.SnackPreOrders)
 	}
 }
 
@@ -79,6 +87,8 @@ func (g *Group) RemoveOrder(v OrderDetails, t string) {
 		decreaseOrder(v, &g.SnackOrders)
 	case Fruit:
 		decreaseOrder(v, &g.FruitOrders)
+	case SnackPre:
+		decreaseOrder(v, &g.SnackPreOrders)
 	}
 }
 
@@ -90,6 +100,8 @@ func (g *Group) RemoveOrderByIndex(index, quantity int, t string) {
 		decreaseOrderByIndex(index-1, quantity, &g.SnackOrders)
 	case Fruit:
 		decreaseOrderByIndex(index-1, quantity, &g.FruitOrders)
+	case SnackPre:
+		decreaseOrderByIndex(index-1, quantity, &g.SnackPreOrders)
 	}
 }
 
@@ -97,6 +109,12 @@ func (g *Group) ClearOrder() {
 	g.DrinksOrders = []OrderDetails{}
 	g.SnackOrders = []OrderDetails{}
 	g.FruitOrders = []OrderDetails{}
+	//g.SnackPreOrders = []OrderDetails{}
+}
+
+func (g *Group) MovePreOrder() {
+	g.SnackOrders = g.SnackPreOrders
+	g.SnackPreOrders = []OrderDetails{}
 }
 
 func (g *Group) GetOrderNameByIndex(i int, t string) string {
@@ -107,6 +125,8 @@ func (g *Group) GetOrderNameByIndex(i int, t string) string {
 		return g.SnackOrders[i-1].Name
 	case Fruit:
 		return g.FruitOrders[i-1].Name
+	case SnackPre:
+		return g.SnackPreOrders[i-1].Name
 	}
 
 	return ""
@@ -131,6 +151,12 @@ func (g *Group) String() string {
 	for i, v := range g.FruitOrders {
 		resp += fmt.Sprintf("\n%d. %s %d", i+1, v.Name, v.Quantity)
 	}
+	resp += "\n\n"
+
+	resp += fmt.Sprintf("พรีออเดอร์ขนมวันที่ %s จำนวน (%d).\n---------------------", preOrderTime.Format("Monday, 02-Jan-06"), sumFn(g.SnackPreOrders))
+	for i, v := range g.SnackPreOrders {
+		resp += fmt.Sprintf("\n%d. %s %d", i+1, v.Name, v.Quantity)
+	}
 	resp += "\n---------------------\n"
 	resp += fmt.Sprintf("%v\n", g.GroupId)
 	return resp
@@ -144,6 +170,13 @@ func main() {
 	//g1 := "group1"
 	//allGroup[g1] = newOrderByGroupId(g1)
 	//
+	//bangkokTZ, _ = time.LoadLocation("Asia/Bangkok")
+	//t := time.Now().In(bangkokTZ)
+	//preOrderTime = addDaySkipWeekend(t)
+	//preOrderTime = addDaySkipWeekend(preOrderTime)
+	//preOrderTime = addDaySkipWeekend(preOrderTime)
+	//preOrderTime = addDaySkipWeekend(preOrderTime)
+
 	//drinkCommand("พ น นม 1", g1)
 	//drinkCommand("พ น นม", g1)
 	//drinkCommand("พ น 1", g1)
@@ -151,7 +184,14 @@ func main() {
 	//
 	//drinkCommand("ล น 1 1", g1)
 	//drinkCommand("ล น นม 1", g1)
+	//
+	//fmt.Println(allGroup[g1])
 
+	//drinkCommand("พ พ ปังๆ", g1)
+	//drinkCommand("พ พ นม 8", g1)
+	//drinkCommand("พ พ นม 3", g1)
+	//drinkCommand("พ พ 1 8", g1)
+	//
 	//fmt.Println(allGroup[g1])
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
@@ -174,6 +214,7 @@ func main() {
 	}
 
 	goTime = time.Now().In(bangkokTZ)
+	preOrderTime = goTime.AddDate(0, 0, 1)
 
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
@@ -185,7 +226,14 @@ func main() {
 	})
 
 	c.AddFunc("30 10 * * *", func() {
-		pushMessagesAllGroup(bot, "สั่งน้ำจ้าปิดเที่ยงครึ่งงง!!!")
+		t := time.Now().In(bangkokTZ)
+		if isNotWeekend() {
+			for gid, _ := range allGroup {
+				allGroup[gid].MovePreOrder()
+			}
+			preOrderTime = addDaySkipWeekend(t)
+			pushMessagesAllGroup(bot, "สั่งน้ำจ้าปิดเที่ยงครึ่งงง!!!")
+		}
 	})
 
 	//c.AddFunc("50 12 * * *", func() {
@@ -401,6 +449,8 @@ func convertType(typ string) string {
 		return Drink
 	case typ == "ข", strings.Contains(typ, "ขนม"):
 		return Snack
+	case typ == "พ", strings.Contains(typ, "พรี"):
+		return SnackPre
 	}
 	return ""
 }
@@ -530,3 +580,18 @@ func pushMessagesOrderSummary(bot *messaging_api.MessagingApiAPI) {
 		}
 	}
 }
+
+func addDaySkipWeekend(t time.Time) time.Time {
+	t = t.Add(time.Hour * 24)
+	for t.Weekday() == time.Saturday || t.Weekday() == time.Sunday {
+		t = t.Add(time.Hour * 24)
+	}
+	return t
+}
+
+//func checkDayWeekend(t time.Time) bool {
+//	if t.Weekday() == time.Saturday || t.Weekday() == time.Sunday {
+//		return true
+//	}
+//	return false
+//}
