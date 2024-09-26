@@ -113,7 +113,7 @@ func (g *Group) ClearOrder() {
 }
 
 func (g *Group) MovePreOrder() {
-	g.SnackOrders = g.SnackPreOrders
+	g.SnackOrders = append(g.SnackOrders, g.SnackPreOrders...)
 	g.SnackPreOrders = []OrderDetails{}
 }
 
@@ -218,20 +218,20 @@ func main() {
 
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
-	c.AddFunc("59 23 * * *", func() {
-		for gid, _ := range allGroup {
-			allGroup[gid].ClearOrder()
+	c.AddFunc("1 0 * * *", func() { //00.01
+		if isNotWeekend() {
+			for gid, _ := range allGroup {
+				allGroup[gid].ClearOrder()
+				allGroup[gid].MovePreOrder()
+			}
+			t := time.Now().In(bangkokTZ)
+			preOrderTime = addDaySkipWeekend(t)
 		}
 		additionalMsg = ""
 	})
 
-	c.AddFunc("30 10 * * *", func() {
-		t := time.Now().In(bangkokTZ)
+	c.AddFunc("30 10 * * *", func() { //10.30
 		if isNotWeekend() {
-			for gid, _ := range allGroup {
-				allGroup[gid].MovePreOrder()
-			}
-			preOrderTime = addDaySkipWeekend(t)
 			pushMessagesAllGroup(bot, "สั่งน้ำจ้าปิดเที่ยงครึ่งงง!!!")
 		}
 	})
