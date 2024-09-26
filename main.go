@@ -214,7 +214,7 @@ func main() {
 	}
 
 	goTime = time.Now().In(bangkokTZ)
-	preOrderTime = goTime.AddDate(0, 0, 1)
+	preOrderTime = addDaySkipWeekend(goTime)
 
 	c := cron.New(cron.WithLocation(bangkokTZ))
 
