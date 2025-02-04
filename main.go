@@ -339,7 +339,7 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 }
 
 func drinkCommand(command, groupId string) {
-	command = strings.ToLower(command)
+	command = strings.TrimSpace(strings.ToLower(command))
 	additionalMsg = ""
 	reply = true
 	switch {
@@ -404,10 +404,8 @@ func drinkCommand(command, groupId string) {
 			additionalMsg = "เกิดข้อผิดพลาด กรุณาทำรายการใหม่"
 			return
 		} else {
-			quantity := 0
-			if l == 3 {
-				quantity = -1
-			} else {
+			quantity := 1
+			if l == 4 {
 				q, err := strconv.Atoi(splitCommands[3])
 				if err != nil {
 					additionalMsg = "สั่งผิด กรุณาสั่งใหม่จ้า"
