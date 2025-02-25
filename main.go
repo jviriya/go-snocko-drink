@@ -46,6 +46,7 @@ var (
 	Fruit         = "F"
 	SnackPre      = "P"
 	allGroup      = map[string]GroupOrderInterface{}
+	lastOrder     = map[string]string{}
 	bangkokTZ     *time.Location
 	additionalMsg = ""
 	reply         = false
@@ -290,16 +291,18 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 				case webhook.TextMessageContent:
 					//if strings.HasPrefix(message.Text, "#") {
 					groupId := e.Source.(webhook.GroupSource).GroupId
+					userId := e.Source.(webhook.GroupSource).UserId
 
 					_, found := allGroup[groupId]
 					if !found {
 						allGroup[groupId] = newOrderByGroupId(groupId)
 					}
 
+					message.Text = strings.TrimSpace(strings.ToLower(message.Text))
 					texts := strings.Split(message.Text, "\n")
 
 					for _, command := range texts {
-						drinkCommand(command, groupId)
+						drinkCommand(command, groupId, userId)
 					}
 
 					messages := []messaging_api.MessageInterface{}
@@ -338,8 +341,8 @@ func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.
 	}
 }
 
-func drinkCommand(command, groupId string) {
-	command = strings.TrimSpace(strings.ToLower(command))
+func drinkCommand(command, groupId, userId string) {
+	command = strings.TrimSpace(command)
 	additionalMsg = ""
 	reply = true
 	switch {
@@ -357,6 +360,10 @@ func drinkCommand(command, groupId string) {
 		additionalMsg = "clear แล้วจ้า"
 		return
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
+		// add latest order
+		if firstNChar(command, 2) == "พ ล" || firstNChar(command, 6) == "เพิ่ม ล" {
+			command = lastOrder[userId]
+		}
 		splitCommands := strings.Split(command, " ")
 		l := len(splitCommands)
 
@@ -391,7 +398,7 @@ func drinkCommand(command, groupId string) {
 					},
 				}, typ)
 			}
-
+			lastOrder[userId] = command
 			additionalMsg = fmt.Sprintf("รับออเดอร์จ้า %v จำนวน %v", splitCommands[2], quantity)
 		}
 
