@@ -361,7 +361,7 @@ func drinkCommand(command, groupId, userId string) {
 		return
 	case firstNChar(command, 2) == "พ ", firstNChar(command, 6) == "เพิ่ม ":
 		// add latest order
-		if firstNChar(command, 2) == "พ ล" || firstNChar(command, 6) == "เพิ่ม ล" {
+		if firstNChar(command, 3) == "พ ล" || firstNChar(command, 7) == "เพิ่ม ล" {
 			command = lastOrder[userId]
 		}
 		splitCommands := strings.Split(command, " ")
