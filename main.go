@@ -272,6 +272,8 @@ func handler(c *gin.Context) {
 }
 
 func lineCallback(bot *messaging_api.MessagingApiAPI, channelSecret string) gin.HandlerFunc {
+	//log.Printf("bot: %+v\n", bot)
+	//log.Printf("channelSecret: %+v\n", channelSecret)
 	return func(c *gin.Context) {
 		cb, err := webhook.ParseRequest(channelSecret, c.Request)
 		if err != nil {
